@@ -321,17 +321,6 @@ function HeroSection() {
 
       <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 24px', width: '100%' }}>
 
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.6 }}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 100, border: `1px solid ${ACCENT}40`, background: `${ACCENT}10`, marginBottom: 32 }}
-        >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT, display: 'block', boxShadow: `0 0 8px ${ACCENT}` }} />
-          <span style={{ fontSize: 12, color: ACCENT, fontWeight: 600, letterSpacing: '0.08em', fontFamily: "'Inter', sans-serif" }}>INDIA'S PREMIUM FITNESS ECOSYSTEM</span>
-        </motion.div>
-
         {/* SE7EN FIT centered logo */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
