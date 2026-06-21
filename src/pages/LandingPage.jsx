@@ -55,121 +55,166 @@ const CssDumbbell = ({ style = {} }) => (
 /* ─── INTRO SCREEN ─── */
 function IntroScreen({ onDone }) {
   const [phase, setPhase] = useState(0);
-  // phase 0 = scan line, 1 = text reveal, 2 = glow settle, 3 = exit
+  // phase 0 = dropping, 1 = landed+glow, 2 = exit
+
+  const prefersReducedMotion = typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 600);
-    const t2 = setTimeout(() => setPhase(2), 1500);
-    const t3 = setTimeout(() => setPhase(3), 3000);
-    const t4 = setTimeout(() => onDone(), 3600);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
-  }, [onDone]);
+    if (prefersReducedMotion) {
+      const t = setTimeout(() => onDone(), 1800);
+      return () => clearTimeout(t);
+    }
+    // letters land at ~1.2s, glow at 1.4s, exit at 2.8s, done at 3.5s
+    const t1 = setTimeout(() => setPhase(1), 1400);
+    const t2 = setTimeout(() => setPhase(2), 2800);
+    const t3 = setTimeout(() => onDone(), 3500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [onDone, prefersReducedMotion]);
 
+  // "SE7EN" letters + space + "FIT" as group
   const letters = ['S', 'E', '7', 'E', 'N'];
 
+  if (prefersReducedMotion) {
+    return (
+      <motion.div
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+        style={{ background: '#050505' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: phase === 2 ? 0 : 1 }}
+        transition={{ duration: 0.8 }}
+        exit={{ opacity: 0 }}
+      >
+        <span style={{ fontSize: 'clamp(48px, 12vw, 120px)', fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", color: '#fff', letterSpacing: '-0.02em' }}>
+          SE7EN <span style={{ color: ACCENT }}>FIT</span>
+        </span>
+      </motion.div>
+    );
+  }
+
   return (
-    <AnimatePresence>
-      {phase < 3 && (
-        <motion.div
-          key="intro"
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
-          style={{ background: '#050505' }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+    <motion.div
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden"
+      style={{ background: '#050505' }}
+      animate={phase === 2 ? { opacity: 0 } : { opacity: 1 }}
+      transition={phase === 2 ? { duration: 0.7, ease: [0.4, 0, 0.2, 1] } : {}}
+    >
+      <Grain />
+
+      {/* Radial glow — appears on land */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.3 }}
+        animate={phase >= 1 ? { opacity: 0.55, scale: 1 } : {}}
+        transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: 'absolute',
+          width: 'min(700px, 90vw)', height: 'min(700px, 90vw)',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${ACCENT}30 0%, transparent 65%)`,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Light sweep — fires once on load */}
+      <motion.div
+        initial={{ x: '-110%' }}
+        animate={{ x: '220%' }}
+        transition={{ duration: 1.1, delay: 1.3, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: `linear-gradient(105deg, transparent 30%, ${ACCENT}25 50%, transparent 70%)`,
+        }}
+      />
+
+      {/* SE7EN — letters drop from top one by one */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1 }}>
+        {letters.map((l, i) => (
+          <motion.span
+            key={i}
+            initial={{ y: '-120vh', opacity: 0, filter: 'blur(8px)' }}
+            animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+            transition={{
+              delay: i * 0.09,
+              duration: 0.75,
+              ease: [0.22, 1.2, 0.36, 1], // spring overshoot feel
+            }}
+            style={{
+              fontSize: 'clamp(64px, 16vw, 180px)',
+              fontWeight: 900,
+              fontFamily: "'Space Grotesk', sans-serif",
+              letterSpacing: '-0.02em',
+              color: l === '7' ? ACCENT : '#ffffff',
+              textShadow: phase >= 1
+                ? l === '7'
+                  ? `0 0 50px ${ACCENT}, 0 0 100px ${ACCENT}60`
+                  : `0 0 30px rgba(255,255,255,0.15)`
+                : 'none',
+              display: 'inline-block',
+              userSelect: 'none',
+              transition: 'text-shadow 0.6s ease',
+            }}
+          >
+            {l}
+          </motion.span>
+        ))}
+
+        {/* Spacer */}
+        <span style={{ display: 'inline-block', width: 'clamp(10px, 2.5vw, 36px)' }} />
+
+        {/* FIT drops slightly after, as a group */}
+        <motion.span
+          initial={{ y: '-120vh', opacity: 0, filter: 'blur(8px)' }}
+          animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+          transition={{ delay: 0.55, duration: 0.75, ease: [0.22, 1.2, 0.36, 1] }}
+          style={{
+            fontSize: 'clamp(64px, 16vw, 180px)',
+            fontWeight: 900,
+            fontFamily: "'Space Grotesk', sans-serif",
+            letterSpacing: '-0.02em',
+            color: ACCENT,
+            textShadow: phase >= 1 ? `0 0 50px ${ACCENT}, 0 0 100px ${ACCENT}60` : 'none',
+            display: 'inline-block',
+            userSelect: 'none',
+            transition: 'text-shadow 0.6s ease',
+          }}
         >
-          <Grain />
+          FIT
+        </motion.span>
+      </div>
 
-          {/* Moving light beam */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <motion.div
-              initial={{ x: '-100%', opacity: 0 }}
-              animate={{ x: '200%', opacity: [0, 0.4, 0] }}
-              transition={{ duration: 1.2, delay: 0.2, ease: 'easeInOut' }}
-              style={{
-                position: 'absolute', top: 0, bottom: 0, width: '30%',
-                background: `linear-gradient(90deg, transparent, ${ACCENT_GLOW}, transparent)`,
-              }}
-            />
-          </div>
+      {/* Tagline fades in after land */}
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, delay: 0.2 }}
+        style={{
+          marginTop: 'clamp(12px, 2vw, 24px)',
+          fontSize: 'clamp(10px, 1.4vw, 14px)',
+          fontWeight: 600,
+          color: ACCENT,
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          fontFamily: "'Inter', sans-serif",
+          userSelect: 'none',
+        }}
+      >
+        INDIA'S PREMIUM FITNESS ECOSYSTEM
+      </motion.p>
 
-          {/* Radial glow */}
-          <motion.div
-            animate={{ opacity: phase >= 2 ? 0.6 : 0, scale: phase >= 2 ? 1 : 0.5 }}
-            transition={{ duration: 1.2 }}
-            style={{
-              position: 'absolute', width: 600, height: 600, borderRadius: '50%',
-              background: `radial-gradient(circle, ${ACCENT_GLOW} 0%, transparent 70%)`,
-              pointerEvents: 'none',
-            }}
-          />
-
-          {/* SE7EN letters */}
-          <div className="relative flex items-end justify-center gap-1 sm:gap-2">
-            {letters.map((l, i) => (
-              <motion.span
-                key={i}
-                initial={{ y: 60, opacity: 0, filter: 'blur(20px)' }}
-                animate={phase >= 1 ? {
-                  y: 0,
-                  opacity: 1,
-                  filter: phase >= 2 ? 'blur(0px)' : 'blur(2px)',
-                } : {}}
-                transition={{
-                  delay: i * 0.08,
-                  duration: 0.7,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                style={{
-                  fontSize: 'clamp(80px, 18vw, 200px)',
-                  fontWeight: 900,
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1,
-                  color: l === '7' ? ACCENT : '#ffffff',
-                  textShadow: phase >= 2
-                    ? l === '7'
-                      ? `0 0 40px ${ACCENT}, 0 0 80px ${ACCENT}80`
-                      : `0 0 30px rgba(255,255,255,0.2)`
-                    : 'none',
-                  display: 'inline-block',
-                  userSelect: 'none',
-                }}
-              >
-                {l}
-              </motion.span>
-            ))}
-          </div>
-
-          {/* FIT tagline */}
-          <motion.p
-            initial={{ opacity: 0, letterSpacing: '0.5em' }}
-            animate={phase >= 2 ? { opacity: 1, letterSpacing: '0.3em' } : {}}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            style={{
-              position: 'absolute', bottom: '30%',
-              fontSize: 14, fontWeight: 600, color: ACCENT,
-              letterSpacing: '0.3em', textTransform: 'uppercase',
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            FITNESS ECOSYSTEM
-          </motion.p>
-
-          {/* Skip button */}
-          <button
-            onClick={onDone}
-            style={{
-              position: 'absolute', bottom: 32, right: 32,
-              color: '#555', fontSize: 12, cursor: 'pointer',
-              background: 'none', border: 'none', letterSpacing: '0.1em',
-              textTransform: 'uppercase', fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            Skip →
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      {/* Skip */}
+      <button
+        onClick={onDone}
+        style={{
+          position: 'absolute', bottom: 28, right: 28,
+          color: '#444', fontSize: 11, cursor: 'pointer',
+          background: 'none', border: 'none', letterSpacing: '0.12em',
+          textTransform: 'uppercase', fontFamily: "'Inter', sans-serif",
+          padding: '6px 10px',
+        }}
+      >
+        Skip →
+      </button>
+    </motion.div>
   );
 }
 
