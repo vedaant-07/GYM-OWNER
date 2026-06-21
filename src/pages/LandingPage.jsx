@@ -712,18 +712,13 @@ function Footer() {
 
 /* ─── MAIN EXPORT ─── */
 export default function LandingPage() {
-  const [introShown, setIntroShown] = useState(false);
-  const [introDone, setIntroDone] = useState(false);
-
-  useEffect(() => {
-    const seen = sessionStorage.getItem('se7en-intro-shown');
-    if (seen) { setIntroDone(true); setIntroShown(true); }
-    else { sessionStorage.setItem('se7en-intro-shown', '1'); }
-  }, []);
+  const [introDone, setIntroDone] = useState(() => {
+    return !!sessionStorage.getItem('se7en-intro-shown');
+  });
 
   const handleIntroDone = () => {
+    sessionStorage.setItem('se7en-intro-shown', '1');
     setIntroDone(true);
-    setIntroShown(true);
   };
 
   return (
@@ -740,13 +735,12 @@ export default function LandingPage() {
       <Grain />
 
       <AnimatePresence>
-        {!introShown && <IntroScreen key="intro" onDone={handleIntroDone} />}
+        {!introDone && <IntroScreen key="intro" onDone={handleIntroDone} />}
       </AnimatePresence>
 
       <motion.div
-        initial={{ opacity: 0 }}
         animate={{ opacity: introDone ? 1 : 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6 }}
         style={{ background: '#050505', minHeight: '100vh', overflowX: 'hidden' }}
       >
         <Navbar />
