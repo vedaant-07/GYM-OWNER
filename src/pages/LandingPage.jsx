@@ -759,12 +759,13 @@ function Footer() {
 export default function LandingPage() {
   const alreadySeen = !!sessionStorage.getItem('se7en-intro-shown');
   const [showIntro, setShowIntro] = useState(!alreadySeen);
+  // If already seen, main is immediately visible; otherwise hidden until intro calls onDone
   const [mainVisible, setMainVisible] = useState(alreadySeen);
 
   const handleIntroDone = () => {
     sessionStorage.setItem('se7en-intro-shown', '1');
     setShowIntro(false);
-    setTimeout(() => setMainVisible(true), 100);
+    setMainVisible(true);
   };
 
   return (
@@ -782,19 +783,18 @@ export default function LandingPage() {
 
       {showIntro && <IntroScreen onDone={handleIntroDone} />}
 
-      <motion.div
-        initial={{ opacity: alreadySeen ? 1 : 0 }}
-        animate={{ opacity: mainVisible ? 1 : 0 }}
-        transition={{ duration: 0.8 }}
-        style={{ background: '#050505', minHeight: '100vh', overflowX: 'hidden' }}
-      >
+      <div style={{
+        background: '#050505', minHeight: '100vh', overflowX: 'hidden',
+        opacity: mainVisible ? 1 : 0,
+        transition: 'opacity 0.8s ease',
+      }}>
         <Navbar />
         <HeroSection />
         <ForUsersSection />
         <ForOwnersSection />
         <PricingSection />
         <Footer />
-      </motion.div>
+      </div>
     </>
   );
 }
