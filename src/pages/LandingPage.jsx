@@ -305,7 +305,8 @@ function HeroSection() {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref });
   const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
-  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  // No opacity transform — was causing content to stay invisible
+  const opacity = 1;
 
   const floatingCards = [
     { icon: Brain, label: 'AI Trainer', x: -320, y: -60, delay: 0.4 },
