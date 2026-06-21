@@ -1,0 +1,60 @@
+{
+  "name": "AssignedWorkoutPlan",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string"
+    },
+    "member_name": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "trainer_id": {
+      "type": "string"
+    },
+    "trainer_name": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "paused",
+        "expired"
+      ],
+      "default": "active"
+    },
+    "completion_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "last_workout_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "member_id",
+    "member_name"
+  ]
+}

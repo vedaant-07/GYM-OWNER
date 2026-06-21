@@ -1,0 +1,50 @@
+{
+  "name": "WhatsAppMessage",
+  "type": "object",
+  "properties": {
+    "recipient_name": {
+      "type": "string"
+    },
+    "recipient_phone": {
+      "type": "string"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "bulk",
+        "automation"
+      ]
+    },
+    "template_name": {
+      "type": "string"
+    },
+    "message_body": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "delivered",
+        "failed",
+        "read"
+      ],
+      "default": "pending"
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "recipient_phone",
+    "message_body"
+  ]
+}

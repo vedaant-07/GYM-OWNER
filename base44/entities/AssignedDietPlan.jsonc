@@ -1,0 +1,58 @@
+{
+  "name": "AssignedDietPlan",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string"
+    },
+    "member_name": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "calories_target": {
+      "type": "number"
+    },
+    "protein_g": {
+      "type": "number"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "paused"
+      ],
+      "default": "active"
+    },
+    "compliance_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "trainer_name": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "member_id",
+    "member_name"
+  ]
+}

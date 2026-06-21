@@ -1,0 +1,66 @@
+{
+  "name": "NotificationAutomation",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "payment_due",
+        "membership_expiry",
+        "trial_followup",
+        "missed_attendance",
+        "workout_missed",
+        "diet_compliance",
+        "birthday",
+        "offer_campaign",
+        "referred_followup"
+      ]
+    },
+    "audience": {
+      "type": "string",
+      "enum": [
+        "all_members",
+        "active_members",
+        "expiring_members",
+        "payment_due",
+        "trial_leads",
+        "referred_users",
+        "inactive_members"
+      ]
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "whatsapp",
+        "email",
+        "both"
+      ]
+    },
+    "template_name": {
+      "type": "string"
+    },
+    "message_body": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "days_before": {
+      "type": "number"
+    },
+    "last_run": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "trigger"
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "name": "WorkoutExercise",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "muscle_group": {
+      "type": "string",
+      "enum": [
+        "chest",
+        "back",
+        "shoulders",
+        "arms",
+        "legs",
+        "core",
+        "cardio",
+        "full_body"
+      ]
+    },
+    "equipment": {
+      "type": "string"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
+    },
+    "instructions": {
+      "type": "string"
+    },
+    "demo_url": {
+      "type": "string"
+    },
+    "default_sets": {
+      "type": "number"
+    },
+    "default_reps": {
+      "type": "string"
+    },
+    "default_duration_seconds": {
+      "type": "number"
+    },
+    "calories_per_set": {
+      "type": "number"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "category": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

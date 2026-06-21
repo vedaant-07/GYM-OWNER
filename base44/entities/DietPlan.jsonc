@@ -1,0 +1,53 @@
+{
+  "name": "DietPlan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string",
+      "enum": [
+        "fat_loss",
+        "muscle_gain",
+        "maintenance",
+        "weight_gain",
+        "general_health"
+      ]
+    },
+    "calories_target": {
+      "type": "number"
+    },
+    "protein_g": {
+      "type": "number"
+    },
+    "carbs_g": {
+      "type": "number"
+    },
+    "fat_g": {
+      "type": "number"
+    },
+    "meals": {
+      "type": "object"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_template": {
+      "type": "boolean",
+      "default": false
+    },
+    "trainer_id": {
+      "type": "string"
+    },
+    "trainer_name": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

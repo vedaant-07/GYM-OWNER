@@ -1,0 +1,50 @@
+{
+  "name": "EmailMessage",
+  "type": "object",
+  "properties": {
+    "recipient_name": {
+      "type": "string"
+    },
+    "recipient_email": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "template_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "delivered",
+        "bounced",
+        "opened",
+        "clicked",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string"
+    },
+    "opened_at": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "subject"
+  ]
+}

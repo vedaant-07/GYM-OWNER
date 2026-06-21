@@ -1,0 +1,55 @@
+{
+  "name": "WorkoutPlan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string",
+      "enum": [
+        "fat_loss",
+        "muscle_gain",
+        "strength",
+        "endurance",
+        "general_fitness"
+      ]
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
+    },
+    "duration_weeks": {
+      "type": "number"
+    },
+    "days_per_week": {
+      "type": "number"
+    },
+    "description": {
+      "type": "string"
+    },
+    "days": {
+      "type": "object"
+    },
+    "trainer_id": {
+      "type": "string"
+    },
+    "trainer_name": {
+      "type": "string"
+    },
+    "is_template": {
+      "type": "boolean",
+      "default": false
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

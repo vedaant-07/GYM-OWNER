@@ -6,7 +6,7 @@ import SkeletonCard from '@/components/ui/SkeletonCard';
 import {
   Users, UserCheck, UserPlus, ClipboardCheck, DollarSign, AlertCircle,
   Clock, Zap, TrendingUp, Megaphone, Wrench, Star, Plus, Target,
-  Gift, Send, Download, BarChart3
+  Gift, Send, Download, BarChart3, Dumbbell, MessageSquare, Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -55,7 +55,7 @@ export default function Dashboard() {
 
   const loadStats = async () => {
     try {
-      const [members, referred, payments, leads, attendance, campaigns, equipment, reviews] = await Promise.all([
+      const [members, referred, payments, leads, attendance, campaigns, equipment, reviews, assignedWorkouts, assignedDiets, whatsapp, emails] = await Promise.all([
         base44.entities.GymMember.list().catch(() => []),
         base44.entities.SE7ENFITReferredUser.list().catch(() => []),
         base44.entities.Payment.list().catch(() => []),
@@ -63,7 +63,11 @@ export default function Dashboard() {
         base44.entities.AttendanceRecord.list().catch(() => []),
         base44.entities.Campaign.list().catch(() => []),
         base44.entities.Equipment.list().catch(() => []),
-        base44.entities.Review.list().catch(() => [])
+        base44.entities.Review.list().catch(() => []),
+        base44.entities.AssignedWorkoutPlan.list().catch(() => []),
+        base44.entities.AssignedDietPlan.list().catch(() => []),
+        base44.entities.WhatsAppMessage.list().catch(() => []),
+        base44.entities.EmailMessage.list().catch(() => [])
       ]);
 
       const activeMembers = members.filter(m => m.status === 'active');
@@ -96,7 +100,11 @@ export default function Dashboard() {
         leadConversion: leads.length > 0 ? Math.round((convertedLeads.length / leads.length) * 100) : 0,
         activeCampaigns: activeCampaigns.length,
         eqIssues: eqIssues.length,
-        avgRating
+        avgRating,
+        activeWorkouts: (assignedWorkouts || []).filter(w => w.status === 'active').length,
+        activeDiets: (assignedDiets || []).filter(d => d.status === 'active').length,
+        whatsappSent: (whatsapp || []).length,
+        emailsSent: (emails || []).length,
       });
     } catch (e) {
       console.error(e);
@@ -128,16 +136,20 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
         <StatCard title="Total Members" value={stats.totalMembers} icon={Users} />
         <StatCard title="Active Members" value={stats.activeMembers} icon={UserCheck} change={`${stats.newThisMonth} new`} changeType="positive" />
-        <StatCard title="New This Month" value={stats.newThisMonth} icon={UserPlus} />
         <StatCard title="Today Attendance" value={stats.todayAttendance} icon={ClipboardCheck} />
-        <StatCard title="Monthly Revenue" value={`₹${stats.revenue?.toLocaleString()}`} icon={DollarSign} />
+        <StatCard title="Monthly Revenue" value={`₹${(stats.revenue || 0).toLocaleString()}`} icon={DollarSign} />
         <StatCard title="Pending Payments" value={stats.duePayments} icon={AlertCircle} />
         <StatCard title="Expiring Soon" value={stats.expiringMemberships} icon={Clock} />
         <StatCard title="SE7EN FIT Referred" value={stats.referredUsers} icon={Zap} />
         <StatCard title="Lead Conversion" value={`${stats.leadConversion}%`} icon={TrendingUp} />
+        <StatCard title="Active Workout Plans" value={stats.activeWorkouts || 0} icon={Dumbbell} />
+        <StatCard title="Active Diet Plans" value={stats.activeDiets || 0} icon={Users} />
         <StatCard title="Active Campaigns" value={stats.activeCampaigns} icon={Megaphone} />
         <StatCard title="Equipment Issues" value={stats.eqIssues} icon={Wrench} />
+        <StatCard title="WhatsApp Queued" value={stats.whatsappSent || 0} icon={MessageSquare} />
+        <StatCard title="Emails Queued" value={stats.emailsSent || 0} icon={Mail} />
         <StatCard title="Avg Rating" value={stats.avgRating} icon={Star} />
+        <StatCard title="New Leads" value={(stats.newThisMonth) || 0} icon={Target} />
       </div>
 
       {/* Charts */}
@@ -207,15 +219,17 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="glass-card rounded-xl p-5">
         <h3 className="text-sm font-display font-semibold mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-10 gap-2">
           <QuickAction icon={UserPlus} label="Add Member" to="/members" />
           <QuickAction icon={Target} label="Add Lead" to="/leads" />
           <QuickAction icon={ClipboardCheck} label="Attendance" to="/attendance" />
+          <QuickAction icon={Dumbbell} label="Assign Workout" to="/assigned-workouts" />
+          <QuickAction icon={Users} label="Assign Diet" to="/assigned-diets" />
           <QuickAction icon={Megaphone} label="Campaign" to="/campaigns" />
-          <QuickAction icon={Send} label="Announce" to="/campaigns" />
+          <QuickAction icon={MessageSquare} label="WhatsApp" to="/whatsapp" />
           <QuickAction icon={Zap} label="Referred" to="/referred-users" />
-          <QuickAction icon={Wrench} label="Equipment" to="/equipment" />
           <QuickAction icon={Download} label="Reports" to="/reports" />
+          <QuickAction icon={Wrench} label="Equipment" to="/equipment" />
         </div>
       </div>
     </div>

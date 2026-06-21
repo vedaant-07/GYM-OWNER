@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { ThemeProvider } from '@/lib/ThemeContext';
 
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -18,11 +19,20 @@ import Home from '@/pages/Home';
 import Onboarding from '@/pages/Onboarding';
 import Members from '@/pages/Members';
 import ReferredUsers from '@/pages/ReferredUsers';
+import Exercises from '@/pages/Exercises';
+import WorkoutPlans from '@/pages/WorkoutPlans';
+import AssignedWorkouts from '@/pages/AssignedWorkouts';
+import DietPlans from '@/pages/DietPlans';
+import AssignedDiets from '@/pages/AssignedDiets';
 import Attendance from '@/pages/Attendance';
 import Leads from '@/pages/Leads';
 import Payments from '@/pages/Payments';
 import Plans from '@/pages/Plans';
 import Campaigns from '@/pages/Campaigns';
+import WhatsAppNotifications from '@/pages/WhatsAppNotifications';
+import EmailNotifications from '@/pages/EmailNotifications';
+import Automations from '@/pages/Automations';
+import Notifications from '@/pages/Notifications';
 import Challenges from '@/pages/Challenges';
 import Staff from '@/pages/Staff';
 import Classes from '@/pages/Classes';
@@ -38,19 +48,15 @@ const AuthenticatedApp = () => {
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#050505' }}>
-        <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: '#242424', borderTopColor: '#D4FF00' }}></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: 'hsl(var(--border))', borderTopColor: '#D4FF00' }}></div>
       </div>
     );
   }
 
   if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
-    }
+    if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
+    if (authError.type === 'auth_required') { navigateToLogin(); return null; }
   }
 
   return (
@@ -66,11 +72,20 @@ const AuthenticatedApp = () => {
           <Route path="/" element={<Home />} />
           <Route path="/members" element={<Members />} />
           <Route path="/referred-users" element={<ReferredUsers />} />
+          <Route path="/exercises" element={<Exercises />} />
+          <Route path="/workout-plans" element={<WorkoutPlans />} />
+          <Route path="/assigned-workouts" element={<AssignedWorkouts />} />
+          <Route path="/diet-plans" element={<DietPlans />} />
+          <Route path="/assigned-diets" element={<AssignedDiets />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/leads" element={<Leads />} />
           <Route path="/payments" element={<Payments />} />
           <Route path="/plans" element={<Plans />} />
           <Route path="/campaigns" element={<Campaigns />} />
+          <Route path="/whatsapp" element={<WhatsAppNotifications />} />
+          <Route path="/email-notifications" element={<EmailNotifications />} />
+          <Route path="/automations" element={<Automations />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/challenges" element={<Challenges />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/classes" element={<Classes />} />
@@ -90,16 +105,18 @@ const AuthenticatedApp = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
-  )
+    <ThemeProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <ScrollToTop />
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
