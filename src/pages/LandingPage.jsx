@@ -62,13 +62,13 @@ function IntroScreen({ onDone }) {
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      const t = setTimeout(() => onDone(), 1800);
+      const t = setTimeout(() => onDone(), 1500);
       return () => clearTimeout(t);
     }
-    // letters land at ~1.2s, glow at 1.4s, exit at 2.8s, done at 3.5s
-    const t1 = setTimeout(() => setPhase(1), 1400);
-    const t2 = setTimeout(() => setPhase(2), 2800);
-    const t3 = setTimeout(() => onDone(), 3500);
+    // t1: glow settles after letters land (~1.2s), t2: start fade, t3: unmount
+    const t1 = setTimeout(() => setPhase(1), 1300);
+    const t2 = setTimeout(() => setPhase(2), 2600);
+    const t3 = setTimeout(() => onDone(), 3300);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [onDone, prefersReducedMotion]);
 
@@ -757,13 +757,14 @@ function Footer() {
 
 /* ─── MAIN EXPORT ─── */
 export default function LandingPage() {
-  const [introDone, setIntroDone] = useState(() => {
-    return !!sessionStorage.getItem('se7en-intro-shown');
-  });
+  const alreadySeen = !!sessionStorage.getItem('se7en-intro-shown');
+  const [showIntro, setShowIntro] = useState(!alreadySeen);
+  const [mainVisible, setMainVisible] = useState(alreadySeen);
 
   const handleIntroDone = () => {
     sessionStorage.setItem('se7en-intro-shown', '1');
-    setIntroDone(true);
+    setShowIntro(false);
+    setTimeout(() => setMainVisible(true), 100);
   };
 
   return (
@@ -779,13 +780,12 @@ export default function LandingPage() {
 
       <Grain />
 
-      <AnimatePresence>
-        {!introDone && <IntroScreen key="intro" onDone={handleIntroDone} />}
-      </AnimatePresence>
+      {showIntro && <IntroScreen onDone={handleIntroDone} />}
 
       <motion.div
-        animate={{ opacity: introDone ? 1 : 0 }}
-        transition={{ duration: 0.6 }}
+        initial={{ opacity: alreadySeen ? 1 : 0 }}
+        animate={{ opacity: mainVisible ? 1 : 0 }}
+        transition={{ duration: 0.8 }}
         style={{ background: '#050505', minHeight: '100vh', overflowX: 'hidden' }}
       >
         <Navbar />
