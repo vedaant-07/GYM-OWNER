@@ -235,18 +235,18 @@ function Navbar() {
       style={{
         position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
         zIndex: 50, display: 'flex', alignItems: 'center', gap: 32,
-        padding: '10px 24px', borderRadius: 100,
-        background: scrolled ? 'rgba(5,5,5,0.92)' : 'rgba(17,17,17,0.6)',
+        padding: '10px 20px', borderRadius: 100,
+        background: scrolled ? 'rgba(5,5,5,0.92)' : 'rgba(17,17,17,0.75)',
         backdropFilter: 'blur(20px)',
-        border: `1px solid ${scrolled ? '#333' : '#222'}`,
+        border: `1px solid ${scrolled ? '#333' : '#2a2a2a'}`,
         transition: 'background 0.3s, border 0.3s',
-        minWidth: 280,
+        width: 'fit-content', whiteSpace: 'nowrap',
       }}
     >
       <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 16, color: ACCENT, letterSpacing: '-0.01em' }}>
         SE7EN FIT
       </span>
-      <div style={{ display: 'flex', gap: 24, flex: 1, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: 24 }}>
         {['For Users', 'Gym Owners', 'Pricing'].map(l => (
           <a key={l} href={`#${l.toLowerCase().replace(' ','-')}`}
             style={{ fontSize: 13, color: '#aaa', textDecoration: 'none', fontFamily: "'Inter', sans-serif", fontWeight: 500, transition: 'color 0.2s' }}
