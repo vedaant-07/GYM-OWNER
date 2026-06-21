@@ -302,29 +302,13 @@ function FloatingCard({ icon: Icon, label, delay = 0, x = 0, y = 0, floatY = 10 
 
 /* ─── HERO SECTION ─── */
 function HeroSection() {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref });
-  const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
-  // No opacity transform — was causing content to stay invisible
-  const opacity = 1;
-
-  const floatingCards = [
-    { icon: Brain, label: 'AI Trainer', x: -320, y: -60, delay: 0.4 },
-    { icon: ScanLine, label: 'Food Scan', x: 300, y: -80, delay: 0.5 },
-    { icon: Dumbbell, label: 'Workout Plans', x: -280, y: 80, delay: 0.6 },
-    { icon: LayoutDashboard, label: 'Owner Dashboard', x: 290, y: 70, delay: 0.7 },
-    { icon: Zap, label: 'SE7EN Referrals', x: -150, y: 140, delay: 0.8 },
-    { icon: Trophy, label: 'Challenges', x: 160, y: 140, delay: 0.9 },
-    { icon: Heart, label: 'Health Sync', x: 0, y: 165, delay: 1.0 },
-  ];
-
   return (
-    <div ref={ref} style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050505' }}>
+    <div style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050505' }}>
 
       {/* Radial glow behind */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: `radial-gradient(ellipse 60% 40% at 50% 60%, ${ACCENT}12 0%, transparent 70%)`,
+        background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${ACCENT}14 0%, transparent 70%)`,
       }} />
 
       {/* Grid lines */}
@@ -335,15 +319,8 @@ function HeroSection() {
         maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
       }} />
 
-      {/* Dumbbell silhouettes */}
-      <div style={{ position: 'absolute', left: '5%', top: '20%', opacity: 0.06, transform: 'rotate(-20deg) scale(1.5)' }}>
-        <CssDumbbell />
-      </div>
-      <div style={{ position: 'absolute', right: '5%', bottom: '20%', opacity: 0.06, transform: 'rotate(15deg) scale(1.2)' }}>
-        <CssDumbbell />
-      </div>
+      <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 24px', width: '100%' }}>
 
-      <motion.div style={{ y, opacity, position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 24px', width: '100%' }}>
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -355,34 +332,27 @@ function HeroSection() {
           <span style={{ fontSize: 12, color: ACCENT, fontWeight: 600, letterSpacing: '0.08em', fontFamily: "'Inter', sans-serif" }}>INDIA'S PREMIUM FITNESS ECOSYSTEM</span>
         </motion.div>
 
-        {/* BIG SE7EN background text */}
-        <div style={{ position: 'relative', marginBottom: 24 }}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              fontSize: 'clamp(100px, 22vw, 280px)',
-              fontWeight: 900,
-              fontFamily: "'Space Grotesk', sans-serif",
-              letterSpacing: '-0.04em',
-              lineHeight: 0.85,
-              background: `linear-gradient(180deg, #ffffff 0%, #ffffff60 60%, transparent 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              userSelect: 'none',
-              pointerEvents: 'none',
-            }}
-          >
-            SE7EN
-          </motion.div>
-
-          {/* Floating cards around the big text */}
-          <div style={{ position: 'absolute', inset: 0 }} className="hidden lg:block">
-            {floatingCards.map((c, i) => <FloatingCard key={i} {...c} />)}
-          </div>
-        </div>
+        {/* SE7EN FIT centered logo */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          style={{ marginBottom: 32 }}
+        >
+          <span style={{
+            fontSize: 'clamp(64px, 14vw, 160px)',
+            fontWeight: 900,
+            fontFamily: "'Space Grotesk', sans-serif",
+            letterSpacing: '-0.04em',
+            lineHeight: 1,
+            color: '#ffffff',
+            display: 'inline-block',
+            userSelect: 'none',
+          }}>
+            SE<span style={{ color: ACCENT }}>7</span>EN{' '}
+            <span style={{ color: ACCENT }}>FIT</span>
+          </span>
+        </motion.div>
 
         {/* Headline */}
         <motion.h1
@@ -390,13 +360,13 @@ function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
           style={{
-            fontSize: 'clamp(18px, 3vw, 36px)', fontWeight: 700, color: '#ffffff',
-            fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em',
-            maxWidth: 640, margin: '0 auto 16px', lineHeight: 1.2,
+            fontSize: 'clamp(16px, 2.5vw, 30px)', fontWeight: 600, color: '#aaaaaa',
+            fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.01em',
+            maxWidth: 580, margin: '0 auto 16px', lineHeight: 1.3,
           }}
         >
           India's Smart Fitness &{' '}
-          <span style={{ color: ACCENT }}>Gym Management</span> Ecosystem
+          <span style={{ color: '#ffffff' }}>Gym Management</span> Ecosystem
         </motion.h1>
 
         {/* Subheadline */}
@@ -405,7 +375,7 @@ function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55, duration: 0.7 }}
           style={{
-            fontSize: 'clamp(14px, 1.6vw, 18px)', color: '#888', maxWidth: 560,
+            fontSize: 'clamp(13px, 1.4vw, 16px)', color: '#555', maxWidth: 520,
             margin: '0 auto 40px', lineHeight: 1.7,
             fontFamily: "'Inter', sans-serif",
           }}
@@ -450,25 +420,7 @@ function HeroSection() {
             </motion.button>
           </Link>
         </motion.div>
-
-        {/* Mobile floating cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.7 }}
-          className="flex lg:hidden flex-wrap justify-center gap-2 mt-10"
-        >
-          {[{icon: Brain, label:'AI Trainer'},{icon:Dumbbell, label:'Workouts'},{icon:Trophy, label:'Challenges'},{icon:Zap, label:'Referrals'},{icon:Heart, label:'Health Sync'}].map((c,i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px',
-              borderRadius: 10, background: '#111', border: '1px solid #222',
-            }}>
-              <c.icon size={13} style={{ color: ACCENT }} />
-              <span style={{ fontSize: 12, color: '#ccc', fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>{c.label}</span>
-            </div>
-          ))}
-        </motion.div>
-      </motion.div>
+      </div>
 
       {/* Bottom fade */}
       <div style={{
