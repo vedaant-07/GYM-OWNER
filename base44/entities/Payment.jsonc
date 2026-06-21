@@ -1,0 +1,62 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string"
+    },
+    "member_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "paid",
+        "due",
+        "overdue",
+        "failed",
+        "refunded"
+      ],
+      "default": "due"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "upi",
+        "card",
+        "bank_transfer",
+        "online",
+        "other"
+      ],
+      "default": "cash"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "invoice_number": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "member_id",
+    "amount"
+  ]
+}

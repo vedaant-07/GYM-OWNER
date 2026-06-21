@@ -1,0 +1,91 @@
+{
+  "name": "GymMember",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "other"
+      ]
+    },
+    "age": {
+      "type": "number"
+    },
+    "join_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "membership_plan": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "paid",
+        "due",
+        "overdue",
+        "partial"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "frozen",
+        "expired"
+      ],
+      "default": "active"
+    },
+    "attendance_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_visit": {
+      "type": "string",
+      "format": "date"
+    },
+    "renewal_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "assigned_trainer": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "walk_in",
+        "referral",
+        "se7en_fit",
+        "online",
+        "other"
+      ],
+      "default": "walk_in"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "phone"
+  ]
+}

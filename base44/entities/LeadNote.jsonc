@@ -1,0 +1,22 @@
+{
+  "name": "LeadNote",
+  "type": "object",
+  "properties": {
+    "lead_id": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "lead_id",
+    "note"
+  ]
+}

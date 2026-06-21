@@ -1,0 +1,49 @@
+{
+  "name": "Trainer",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "specialization": {
+      "type": "string"
+    },
+    "experience_years": {
+      "type": "number"
+    },
+    "assigned_members_count": {
+      "type": "number",
+      "default": 0
+    },
+    "schedule": {
+      "type": "string"
+    },
+    "salary": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "photo": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "phone"
+  ]
+}

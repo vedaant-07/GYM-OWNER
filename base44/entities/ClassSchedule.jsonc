@@ -1,0 +1,57 @@
+{
+  "name": "ClassSchedule",
+  "type": "object",
+  "properties": {
+    "class_name": {
+      "type": "string"
+    },
+    "trainer_id": {
+      "type": "string"
+    },
+    "trainer_name": {
+      "type": "string"
+    },
+    "day_of_week": {
+      "type": "string",
+      "enum": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday"
+      ]
+    },
+    "start_time": {
+      "type": "string"
+    },
+    "end_time": {
+      "type": "string"
+    },
+    "capacity": {
+      "type": "number"
+    },
+    "booked_count": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "completed"
+      ],
+      "default": "active"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "class_name",
+    "day_of_week",
+    "start_time"
+  ]
+}

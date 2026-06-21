@@ -1,0 +1,41 @@
+{
+  "name": "EquipmentMaintenanceLog",
+  "type": "object",
+  "properties": {
+    "equipment_id": {
+      "type": "string"
+    },
+    "equipment_name": {
+      "type": "string"
+    },
+    "maintenance_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "routine",
+        "repair",
+        "replacement"
+      ],
+      "default": "routine"
+    },
+    "description": {
+      "type": "string"
+    },
+    "cost": {
+      "type": "number"
+    },
+    "performed_by": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "maintenance_date"
+  ]
+}

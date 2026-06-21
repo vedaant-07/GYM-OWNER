@@ -1,0 +1,76 @@
+{
+  "name": "GymProfile",
+  "type": "object",
+  "properties": {
+    "owner_name": {
+      "type": "string"
+    },
+    "gym_name": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "gst_number": {
+      "type": "string"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "opening_hours": {
+      "type": "string"
+    },
+    "amenities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "gym_capacity": {
+      "type": "number"
+    },
+    "trainer_count": {
+      "type": "number"
+    },
+    "staff_count": {
+      "type": "number"
+    },
+    "bank_details": {
+      "type": "string"
+    },
+    "partnership_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "inactive",
+        "premium"
+      ]
+    },
+    "google_maps_link": {
+      "type": "string"
+    },
+    "onboarding_completed": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "gym_name",
+    "owner_name"
+  ]
+}

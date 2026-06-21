@@ -1,0 +1,42 @@
+{
+  "name": "Referral",
+  "type": "object",
+  "properties": {
+    "referral_code": {
+      "type": "string"
+    },
+    "referred_by_member_id": {
+      "type": "string"
+    },
+    "referred_by_name": {
+      "type": "string"
+    },
+    "referred_member_id": {
+      "type": "string"
+    },
+    "referred_member_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "converted",
+        "expired"
+      ],
+      "default": "pending"
+    },
+    "incentive_type": {
+      "type": "string"
+    },
+    "incentive_value": {
+      "type": "number"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "referral_code"
+  ]
+}

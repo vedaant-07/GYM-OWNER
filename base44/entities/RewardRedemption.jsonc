@@ -1,0 +1,34 @@
+{
+  "name": "RewardRedemption",
+  "type": "object",
+  "properties": {
+    "reward_id": {
+      "type": "string"
+    },
+    "member_id": {
+      "type": "string"
+    },
+    "member_name": {
+      "type": "string"
+    },
+    "coins_spent": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "fulfilled",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "reward_id",
+    "member_id"
+  ]
+}

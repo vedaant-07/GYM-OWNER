@@ -1,0 +1,112 @@
+{
+  "name": "SE7ENFITReferredUser",
+  "type": "object",
+  "properties": {
+    "user_name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "joined_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "referral_source": {
+      "type": "string"
+    },
+    "referred_by": {
+      "type": "string"
+    },
+    "gym_linked_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "membership_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "expired",
+        "trial",
+        "none"
+      ],
+      "default": "none"
+    },
+    "subscription_plan": {
+      "type": "string"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "paid",
+        "due",
+        "overdue",
+        "none"
+      ],
+      "default": "none"
+    },
+    "last_attendance": {
+      "type": "string",
+      "format": "date"
+    },
+    "conversion_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "converted",
+        "lost"
+      ],
+      "default": "pending"
+    },
+    "assigned_trainer": {
+      "type": "string"
+    },
+    "follow_up_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "scheduled",
+        "completed",
+        "overdue"
+      ],
+      "default": "none"
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "lifetime_value": {
+      "type": "number",
+      "default": 0
+    },
+    "renewal_due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "offers_received": {
+      "type": "number",
+      "default": 0
+    },
+    "announcements_received": {
+      "type": "number",
+      "default": 0
+    },
+    "city": {
+      "type": "string"
+    },
+    "gym_profile_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_name",
+    "phone"
+  ]
+}
