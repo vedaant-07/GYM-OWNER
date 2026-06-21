@@ -11,7 +11,7 @@ export default function PageHeader({ title, description, actionLabel, actionIcon
       <div className="flex items-center gap-3">
         {children}
         {actionLabel && onAction && (
-          <Button onClick={onAction} className="font-semibold" style={{ background: '#D4FF00', color: '#000' }}>
+          <Button onClick={onAction} className="font-semibold"             style={{ background: '#20c55d', color: '#000' }}>
             {ActionIcon && <ActionIcon className="w-4 h-4 mr-2" />}
             {actionLabel}
           </Button>

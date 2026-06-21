@@ -15,6 +15,7 @@ import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import LandingPage from '@/pages/LandingPage';
 import Home from '@/pages/Home';
 import Onboarding from '@/pages/Onboarding';
 import Members from '@/pages/Members';
@@ -49,7 +50,7 @@ const AuthenticatedApp = () => {
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: 'hsl(var(--border))', borderTopColor: '#D4FF00' }}></div>
+        <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: 'hsl(var(--border))', borderTopColor: '#20c55d' }}></div>
       </div>
     );
   }
@@ -61,6 +62,7 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -69,7 +71,7 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route path="/onboarding" element={<Onboarding />} />
         <Route element={<DashboardLayout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Home />} />
           <Route path="/members" element={<Members />} />
           <Route path="/referred-users" element={<ReferredUsers />} />
           <Route path="/exercises" element={<Exercises />} />

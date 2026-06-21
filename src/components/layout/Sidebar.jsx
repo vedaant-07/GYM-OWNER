@@ -11,7 +11,7 @@ import {
 const NAV_GROUPS = [
   {
     id: 'command', label: 'Command Center', items: [
-      { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
       { label: 'Notifications', icon: Bell, path: '/notifications' },
     ]
   },
@@ -143,7 +143,7 @@ function NavGroup({ group, collapsed, onClose }) {
                         ? 'text-primary-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent'
                     }`}
-                    style={isActive ? { background: '#D4FF00', color: '#000' } : {}}
+                    style={isActive ? { background: '#20c55d', color: '#000' } : {}}
                   >
                     <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-black' : ''}`} />
                     <span className="truncate text-[13px]">{item.label}</span>
@@ -183,15 +183,15 @@ export default function Sidebar({ isOpen, onClose }) {
           className="flex items-center justify-between px-4 h-16 flex-shrink-0"
           style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}
         >
-          <Link to="/" className="flex items-center gap-2.5">
+          <Link to="/dashboard" className="flex items-center gap-2.5">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center font-display font-bold text-sm flex-shrink-0"
-              style={{ background: '#D4FF00', color: '#000' }}
+              style={{ background: '#20c55d', color: '#000' }}
             >
               S7
             </div>
             <div>
-              <p className="font-display font-bold text-sm leading-tight" style={{ color: '#D4FF00' }}>SE7EN FIT</p>
+              <p className="font-display font-bold text-sm leading-tight"             style={{ color: '#20c55d' }}>SE7EN FIT</p>
               <p className="text-[9px] text-muted-foreground leading-tight tracking-wider uppercase">Command Center</p>
             </div>
           </Link>
@@ -215,7 +215,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <div className="flex items-center gap-2">
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              style={{ background: '#D4FF00', color: '#000' }}
+              style={{ background: '#20c55d', color: '#000' }}
             >
               G
             </div>

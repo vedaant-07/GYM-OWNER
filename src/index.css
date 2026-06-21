@@ -13,20 +13,20 @@
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 6.7%;
     --popover-foreground: 0 0% 100%;
-    --primary: 72 100% 50%;
+    --primary: 145 72% 47%;
     --primary-foreground: 0 0% 0%;
     --secondary: 0 0% 9%;
     --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 9%;
     --muted-foreground: 0 0% 64%;
-    --accent: 72 100% 50%;
+    --accent: 145 72% 47%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 14%;
     --input: 0 0% 14%;
-    --ring: 72 100% 50%;
-    --chart-1: 72 100% 50%;
+    --ring: 145 72% 47%;
+    --chart-1: 145 72% 47%;
     --chart-2: 142 71% 45%;
     --chart-3: 48 96% 53%;
     --chart-4: 0 84% 60%;
@@ -38,12 +38,12 @@
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 72 100% 50%;
+    --sidebar-primary: 145 72% 47%;
     --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 72 100% 50%;
+    --sidebar-ring: 145 72% 47%;
   }
 
   .light {
@@ -53,32 +53,32 @@
     --card-foreground: 220 13% 7%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 13% 7%;
-    --primary: 84 100% 40%;
+    --primary: 145 72% 40%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 94%;
     --secondary-foreground: 220 13% 7%;
     --muted: 220 14% 94%;
     --muted-foreground: 220 8% 43%;
-    --accent: 84 100% 40%;
+    --accent: 145 72% 40%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 13% 90%;
     --input: 220 13% 90%;
-    --ring: 84 100% 40%;
-    --chart-1: 84 100% 40%;
+    --ring: 145 72% 40%;
+    --chart-1: 145 72% 40%;
     --chart-2: 142 71% 40%;
     --chart-3: 48 96% 50%;
     --chart-4: 0 84% 60%;
     --chart-5: 199 89% 48%;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 13% 7%;
-    --sidebar-primary: 84 100% 40%;
+    --sidebar-primary: 145 72% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 95%;
     --sidebar-accent-foreground: 220 13% 7%;
     --sidebar-border: 220 13% 90%;
-    --sidebar-ring: 84 100% 40%;
+    --sidebar-ring: 145 72% 40%;
   }
 
   .dark {
@@ -88,32 +88,32 @@
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 6.7%;
     --popover-foreground: 0 0% 100%;
-    --primary: 72 100% 50%;
+    --primary: 145 72% 47%;
     --primary-foreground: 0 0% 0%;
     --secondary: 0 0% 9%;
     --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 9%;
     --muted-foreground: 0 0% 64%;
-    --accent: 72 100% 50%;
+    --accent: 145 72% 47%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 14%;
     --input: 0 0% 14%;
-    --ring: 72 100% 50%;
-    --chart-1: 72 100% 50%;
+    --ring: 145 72% 47%;
+    --chart-1: 145 72% 47%;
     --chart-2: 142 71% 45%;
     --chart-3: 48 96% 53%;
     --chart-4: 0 84% 60%;
     --chart-5: 199 89% 48%;
     --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 72 100% 50%;
+    --sidebar-primary: 145 72% 47%;
     --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 72 100% 50%;
+    --sidebar-ring: 145 72% 47%;
   }
 }
 
@@ -123,9 +123,9 @@
 }
 
 /* Neon glow utilities */
-.neon-glow { box-shadow: 0 0 20px rgba(212,255,0,0.15), 0 0 40px rgba(212,255,0,0.05); }
-.neon-glow-strong { box-shadow: 0 0 30px rgba(212,255,0,0.3), 0 0 60px rgba(212,255,0,0.1); }
-.neon-text-glow { text-shadow: 0 0 20px rgba(212,255,0,0.5), 0 0 40px rgba(212,255,0,0.2); }
+.neon-glow { box-shadow: 0 0 20px rgba(32,197,93,0.15), 0 0 40px rgba(32,197,93,0.05); }
+.neon-glow-strong { box-shadow: 0 0 30px rgba(32,197,93,0.3), 0 0 60px rgba(32,197,93,0.1); }
+.neon-text-glow { text-shadow: 0 0 20px rgba(32,197,93,0.5), 0 0 40px rgba(32,197,93,0.2); }
 
 .dark .glass-card {
   background: rgba(17,17,17,0.8);

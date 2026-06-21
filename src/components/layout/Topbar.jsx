@@ -19,7 +19,7 @@ export default function Topbar({ onMenuClick }) {
   };
 
   // Build breadcrumb from path
-  const crumbs = location.pathname.split('/').filter(Boolean);
+  const crumbs = location.pathname.split('/').filter(b => b && b !== 'dashboard');
 
   return (
     <header
@@ -75,7 +75,7 @@ export default function Topbar({ onMenuClick }) {
           <Bell className="w-4 h-4" />
           <span
             className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-            style={{ background: '#D4FF00' }}
+            style={{ background: '#20c55d' }}
           />
         </Link>
 

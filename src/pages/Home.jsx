@@ -21,7 +21,7 @@ export default function Home() {
         if (profiles.length > 0 && profiles[0].onboarding_completed) {
           setHasProfile(true);
         } else {
-          navigate('/onboarding');
+          navigate('/onboarding', { replace: true });
         }
       } catch {
         setHasProfile(true);
@@ -38,7 +38,7 @@ export default function Home() {
   if (checkingProfile) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-4 border-border rounded-full animate-spin" style={{ borderTopColor: '#D4FF00' }} />
+        <div className="w-8 h-8 border-4 border-border rounded-full animate-spin" style={{ borderTopColor: '#20c55d' }} />
       </div>
     );
   }
