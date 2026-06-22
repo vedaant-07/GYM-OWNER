@@ -25,6 +25,14 @@ const endpointMap = {
 
 const pathsFor = (entityName) => endpointMap[entityName] || [`/api/gym-owner/${entityName}`];
 
+function persistAuth(result) {
+  const token = result?.token || result?.access_token;
+  if (!token) throw new Error('No token returned from backend.');
+  tokenStore.set(token);
+  userStore.set(result.user || null);
+  return result;
+}
+
 const createEntityAdapter = (entityName) => ({
   async list() {
     return safeList(pathsFor(entityName));
@@ -62,11 +70,14 @@ export const base44 = {
         method: 'POST',
         body: { email, password, role: 'gym_owner' },
       });
-      const token = result.token || result.access_token;
-      if (!token) throw new Error('No token returned from backend.');
-      tokenStore.set(token);
-      userStore.set(result.user || null);
-      return result;
+      return persistAuth(result);
+    },
+    async loginWithGoogleCredential(idToken) {
+      const result = await apiRequest('/api/auth/google', {
+        method: 'POST',
+        body: { idToken, role: 'gym_owner' },
+      });
+      return persistAuth(result);
     },
     async register(payload) {
       const result = await apiRequest('/api/auth/register', {
@@ -110,8 +121,11 @@ export const base44 = {
     setToken(token) {
       tokenStore.set(token);
     },
-    loginWithProvider() {
-      throw new Error('Google login for the owner website will be connected after web OAuth client setup. Please use email login now.');
+    async loginWithProvider(provider) {
+      if (provider === 'google') {
+        throw new Error('Use the Google identity button on this page.');
+      }
+      throw new Error('Provider is not supported.');
     },
     redirectToLogin() {
       window.location.href = '/login';
