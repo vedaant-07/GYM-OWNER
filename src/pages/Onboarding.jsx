@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
 
 const STEPS = ['Owner Info', 'Gym Details', 'Operations', 'Partnership'];
@@ -92,13 +91,13 @@ export default function Onboarding() {
 
   const Field = ({ label, name, type = 'text', placeholder, required }) => (
     <div className="space-y-1.5">
-      <Label className="text-sm text-muted-foreground">{label}{required && <span className="text-red-400 ml-1">*</span>}</Label>
+      <Label className="text-sm text-muted-foreground tracking-normal">{label}{required && <span className="text-red-400 ml-1">*</span>}</Label>
       <Input
         type={type}
         placeholder={placeholder}
         value={form[name]}
         onChange={(e) => update(name, e.target.value)}
-        className="bg-secondary border-border text-foreground focus-visible:ring-primary"
+        className="bg-secondary border-border text-foreground focus-visible:ring-primary tracking-normal"
       />
     </div>
   );
@@ -108,16 +107,16 @@ export default function Onboarding() {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold neon-glow" style={{ background: NEON_GREEN, color: '#000' }}>S7</div>
-            <span className="font-display font-bold text-2xl neon-text-glow" style={{ color: NEON_GREEN }}>SE7EN FIT</span>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold neon-glow tracking-normal" style={{ background: NEON_GREEN, color: '#000' }}>S7</div>
+            <span className="font-bold text-2xl neon-text-glow tracking-normal" style={{ color: NEON_GREEN }}>SE7EN FIT</span>
           </div>
-          <p className="text-muted-foreground text-sm">Set up your gym in minutes</p>
+          <p className="text-muted-foreground text-sm tracking-normal">Set up your gym in minutes</p>
         </div>
 
         <div className="flex items-center justify-center gap-2 mb-8">
           {STEPS.map((s, i) => (
             <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                 i <= step ? 'text-black neon-glow' : 'text-muted-foreground'
               }`} style={i <= step ? { background: NEON_GREEN } : { background: '#1a1a1a' }}>
                 {i < step ? <Check className="w-4 h-4" /> : i + 1}
@@ -128,79 +127,77 @@ export default function Onboarding() {
         </div>
 
         <div className="glass-card rounded-2xl p-6">
-          <h2 className="text-lg font-display font-bold mb-1">{STEPS[step]}</h2>
-          <p className="text-sm text-muted-foreground mb-5">
+          <h2 className="text-lg font-bold mb-1 tracking-normal">{STEPS[step]}</h2>
+          <p className="text-sm text-muted-foreground mb-5 tracking-normal">
             {step === 0 && 'Your owner details are prefilled from your login account'}
             {step === 1 && 'Add your gym details'}
             {step === 2 && 'Operational setup'}
             {step === 3 && 'SE7EN FIT partnership'}
           </p>
 
-          <AnimatePresence mode="wait">
-            <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-              {step === 0 && (
-                <>
-                  <Field label="Owner Name" name="owner_name" placeholder="Your full name" required />
-                  <Field label="Email" name="email" type="email" placeholder="owner@gym.com" required />
-                  <Field label="Phone Number" name="phone" placeholder="+91 9876543210" required />
-                </>
-              )}
-              {step === 1 && (
-                <>
-                  <Field label="Gym Name" name="gym_name" placeholder="Your gym name" required />
-                  <Field label="Address" name="address" placeholder="Full gym address" required />
-                  <Field label="City" name="city" placeholder="City" required />
-                  <Field label="GST Number" name="gst_number" placeholder="Optional - not saved yet" />
-                  <div className="space-y-1.5">
-                    <Label className="text-sm text-muted-foreground">Description</Label>
-                    <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Tell members about your gym" className="bg-secondary border-border text-foreground focus-visible:ring-primary" />
-                  </div>
-                </>
-              )}
-              {step === 2 && (
-                <>
-                  <Field label="Opening Hours" name="opening_hours" placeholder="e.g. 5 AM - 11 PM" />
-                  <Field label="Gym Capacity" name="gym_capacity" type="number" placeholder="Max members" />
-                  <Field label="Trainer Count" name="trainer_count" type="number" placeholder="Number of trainers" />
-                  <Field label="Staff Count" name="staff_count" type="number" placeholder="Number of staff" />
-                  <Field label="Bank/Payout Details" name="bank_details" placeholder="Account details (optional)" />
-                </>
-              )}
-              {step === 3 && (
-                <>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm text-muted-foreground">SE7EN FIT Partnership Status</Label>
-                    <Select value={form.partnership_status} onValueChange={(v) => update('partnership_status', v)}>
-                      <SelectTrigger className="bg-secondary border-border focus:ring-primary">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="active">Active Partner</SelectItem>
-                        <SelectItem value="premium">Premium Partner</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="rounded-xl p-4 mt-4" style={{ background: NEON_GREEN_SOFT, border: `1px solid ${NEON_GREEN}33` }}>
-                    <p className="text-sm text-muted-foreground">
-                      By completing onboarding, you agree to the SE7EN FIT Gym Owner terms and data access policies. You'll only have access to your own gym data and members.
-                    </p>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          </AnimatePresence>
+          <div className="space-y-4">
+            {step === 0 && (
+              <>
+                <Field label="Owner Name" name="owner_name" placeholder="Your full name" required />
+                <Field label="Email" name="email" type="email" placeholder="owner@gym.com" required />
+                <Field label="Phone Number" name="phone" placeholder="+91 9876543210" required />
+              </>
+            )}
+            {step === 1 && (
+              <>
+                <Field label="Gym Name" name="gym_name" placeholder="Your gym name" required />
+                <Field label="Address" name="address" placeholder="Full gym address" required />
+                <Field label="City" name="city" placeholder="City" required />
+                <Field label="GST Number" name="gst_number" placeholder="Optional - not saved yet" />
+                <div className="space-y-1.5">
+                  <Label className="text-sm text-muted-foreground tracking-normal">Description</Label>
+                  <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Tell members about your gym" className="bg-secondary border-border text-foreground focus-visible:ring-primary tracking-normal" />
+                </div>
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <Field label="Opening Hours" name="opening_hours" placeholder="e.g. 5 AM - 11 PM" />
+                <Field label="Gym Capacity" name="gym_capacity" type="number" placeholder="Max members" />
+                <Field label="Trainer Count" name="trainer_count" type="number" placeholder="Number of trainers" />
+                <Field label="Staff Count" name="staff_count" type="number" placeholder="Number of staff" />
+                <Field label="Bank/Payout Details" name="bank_details" placeholder="Account details (optional)" />
+              </>
+            )}
+            {step === 3 && (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-sm text-muted-foreground tracking-normal">SE7EN FIT Partnership Status</Label>
+                  <Select value={form.partnership_status} onValueChange={(v) => update('partnership_status', v)}>
+                    <SelectTrigger className="bg-secondary border-border focus:ring-primary tracking-normal">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active Partner</SelectItem>
+                      <SelectItem value="premium">Premium Partner</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="rounded-xl p-4 mt-4" style={{ background: NEON_GREEN_SOFT, border: `1px solid ${NEON_GREEN}33` }}>
+                  <p className="text-sm text-muted-foreground tracking-normal">
+                    By completing onboarding, you agree to the SE7EN FIT Gym Owner terms and data access policies. You'll only have access to your own gym data and members.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
 
           <div className="flex justify-between mt-6 pt-4" style={{ borderTop: '1px solid #1a1a1a' }}>
-            <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={step === 0} className="text-muted-foreground">
+            <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={step === 0} className="text-muted-foreground tracking-normal">
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             {step < STEPS.length - 1 ? (
-              <Button onClick={nextStep} className="font-semibold hover:opacity-90" style={{ background: NEON_GREEN, color: '#000' }}>
+              <Button onClick={nextStep} className="font-semibold hover:opacity-90 tracking-normal" style={{ background: NEON_GREEN, color: '#000' }}>
                 Next <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={saving} className="font-semibold hover:opacity-90" style={{ background: NEON_GREEN, color: '#000' }}>
+              <Button onClick={handleSubmit} disabled={saving} className="font-semibold hover:opacity-90 tracking-normal" style={{ background: NEON_GREEN, color: '#000' }}>
                 {saving ? 'Setting up...' : 'Launch Gym Portal'} <Check className="w-4 h-4 ml-1" />
               </Button>
             )}
