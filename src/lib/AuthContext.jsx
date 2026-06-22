@@ -53,13 +53,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
-    const result = await base44.auth.loginViaEmailPassword(email, password);
+  const applyAuthResult = (result) => {
     const nextUser = result.user || userStore.get();
     setUser(nextUser);
     setIsAuthenticated(true);
     setAuthError(null);
     return result;
+  };
+
+  const login = async (email, password) => {
+    const result = await base44.auth.loginViaEmailPassword(email, password);
+    return applyAuthResult(result);
+  };
+
+  const loginWithGoogleCredential = async (idToken) => {
+    const result = await base44.auth.loginWithGoogleCredential(idToken);
+    return applyAuthResult(result);
   };
 
   const register = async (payload) => {
@@ -93,6 +102,7 @@ export const AuthProvider = ({ children }) => {
       appPublicSettings,
       authChecked,
       login,
+      loginWithGoogleCredential,
       register,
       logout,
       navigateToLogin,
