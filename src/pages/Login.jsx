@@ -1,19 +1,51 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
-import GoogleIcon from "@/components/GoogleIcon";
 import { useAuth } from "@/lib/AuthContext";
+import { renderGoogleSignInButton } from "@/lib/google-web-auth";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginWithGoogleCredential } = useAuth();
+  const googleButtonRef = useRef(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    renderGoogleSignInButton({
+      element: googleButtonRef.current,
+      onError: (message) => {
+        if (!cancelled) setError(message);
+      },
+      onCredential: async (credential) => {
+        if (cancelled) return;
+        setError("");
+        setGoogleLoading(true);
+        try {
+          await loginWithGoogleCredential(credential);
+          window.location.href = "/dashboard";
+        } catch (err) {
+          setError(err.message || "Google login failed. Please try again or use email login.");
+        } finally {
+          if (!cancelled) setGoogleLoading(false);
+        }
+      },
+    }).catch((err) => {
+      if (!cancelled) setError(err.message || "Google login could not load.");
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loginWithGoogleCredential]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,10 +59,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogle = () => {
-    setError("Google login for the owner website needs web OAuth setup. Use email login for now.");
   };
 
   return (
@@ -47,14 +75,10 @@ export default function Login() {
         </>
       }
     >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
-      >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
+      <div className="w-full mb-6 min-h-[48px] flex items-center justify-center">
+        <div ref={googleButtonRef} className="w-full flex justify-center" />
+        {googleLoading && <Loader2 className="w-4 h-4 ml-3 animate-spin text-primary" />}
+      </div>
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
