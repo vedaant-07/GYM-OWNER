@@ -1,35 +1,46 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { UserPlus, Mail, Lock, Loader2, User, Phone, Building2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
-import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Register() {
+  const { register } = useAuth();
+  const [ownerName, setOwnerName] = useState("");
+  const [gymName, setGymName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showOtp, setShowOtp] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!ownerName.trim()) {
+      setError("Please enter owner name");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
     setLoading(true);
     try {
-      await base44.auth.register({ email, password });
-      setShowOtp(true);
+      await register({
+        name: ownerName.trim(),
+        ownerName: ownerName.trim(),
+        gymName: gymName.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
+        password,
+      });
+      window.location.href = "/onboarding";
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -37,98 +48,15 @@ export default function Register() {
     }
   };
 
-  const handleVerify = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      const result = await base44.auth.verifyOtp({ email, otpCode });
-      if (result?.access_token) {
-        base44.auth.setToken(result.access_token);
-      }
-      window.location.href = "/";
-    } catch (err) {
-      setError(err.message || "Invalid verification code");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setError("");
-    try {
-      await base44.auth.resendOtp(email);
-      toast({
-        title: "Code sent",
-        description: "Check your email for the new code.",
-      });
-    } catch (err) {
-      setError(err.message || "Failed to resend code");
-    }
-  };
-
   const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", "/");
+    setError("Google registration for the owner website needs web OAuth setup. Use email registration for now.");
   };
-
-  if (showOtp) {
-    return (
-      <AuthLayout
-        icon={Mail}
-        title="Verify your email"
-        subtitle={`We sent a code to ${email}`}
-      >
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-            {error}
-          </div>
-        )}
-        <div className="flex justify-center mb-6">
-          <InputOTP
-            maxLength={6}
-            value={otpCode}
-            onChange={setOtpCode}
-            autoFocus
-            autoComplete="one-time-code"
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
-        </div>
-        <Button
-          className="w-full h-12 font-medium"
-          onClick={handleVerify}
-          disabled={loading || otpCode.length < 6}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Verifying...
-            </>
-          ) : (
-            "Verify"
-          )}
-        </Button>
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          Didn't receive the code?{" "}
-          <button onClick={handleResend} className="text-primary font-medium hover:underline">
-            Resend
-          </button>
-        </p>
-      </AuthLayout>
-    );
-  }
 
   return (
     <AuthLayout
       icon={UserPlus}
-      title="Create your account"
-      subtitle="Sign up to get started"
+      title="Create your owner account"
+      subtitle="Connect your gym to SE7EN FIT"
       footer={
         <>
           Already have an account?{" "}
@@ -164,52 +92,45 @@ export default function Register() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
+          <Label htmlFor="ownerName">Owner Name</Label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input id="ownerName" placeholder="Your full name" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className="pl-10 h-12" required />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="gymName">Gym Name</Label>
+          <div className="relative">
+            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input id="gymName" placeholder="Your gym name" value={gymName} onChange={(e) => setGymName(e.target.value)} className="pl-10 h-12" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Mobile Number</Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input id="phone" placeholder="+91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12" />
+          </div>
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              autoFocus
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
+            <Input id="email" type="email" autoComplete="email" placeholder="owner@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12" required />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
+            <Input id="password" type="password" autoComplete="new-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-12" required />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm">Confirm Password</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="confirm"
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
+            <Input id="confirm" type="password" autoComplete="new-password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-12" required />
           </div>
         </div>
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
@@ -219,7 +140,7 @@ export default function Register() {
               Creating account...
             </>
           ) : (
-            "Create account"
+            "Create owner account"
           )}
         </Button>
       </form>
