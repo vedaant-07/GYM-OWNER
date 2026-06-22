@@ -41,6 +41,11 @@ export const userStore = {
 
 function normalizeResponsePayload(payload) {
   if (Array.isArray(payload)) return payload;
+
+  // Auth endpoints return { success, message, token, user }. Preserve the full
+  // object so login/register/Google login can store the JWT token.
+  if (payload?.token || payload?.access_token) return payload;
+
   if (payload?.data) return payload.data;
   if (payload?.items) return payload.items;
   if (payload?.results) return payload.results;
