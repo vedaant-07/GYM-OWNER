@@ -5,14 +5,14 @@ import StatCard from '@/components/ui/StatCard';
 import SkeletonCard from '@/components/ui/SkeletonCard';
 import {
   Users, UserCheck, UserPlus, ClipboardCheck, DollarSign, AlertCircle,
-  Clock, Zap, TrendingUp, Megaphone, Wrench, Star, Plus, Target,
-  Gift, Send, Download, BarChart3, Dumbbell, MessageSquare, Mail
+  Clock, Zap, TrendingUp, Megaphone, Wrench, Star, Target,
+  Download, Dumbbell, MessageSquare, Mail
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 
-const CHART_COLORS = ['#D4FF00', '#22C55E', '#FACC15', '#EF4444', '#3B82F6', '#A855F7'];
+const NEON_GREEN = '#20c55d';
+const CHART_COLORS = ['#20c55d', '#22C55E', '#16A34A', '#EF4444', '#3B82F6', '#A855F7'];
 
 const mockRevenue = [
   { month: 'Jan', revenue: 45000 }, { month: 'Feb', revenue: 52000 }, { month: 'Mar', revenue: 48000 },
@@ -38,8 +38,8 @@ const ChartCard = ({ title, children }) => (
 
 const QuickAction = ({ icon: Icon, label, to }) => (
   <Link to={to} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group">
-    <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all group-hover:neon-glow" style={{ background: 'rgba(212,255,0,0.1)' }}>
-      <Icon className="w-5 h-5" style={{ color: '#D4FF00' }} />
+    <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all group-hover:neon-glow" style={{ background: 'rgba(32,197,93,0.1)' }}>
+      <Icon className="w-5 h-5" style={{ color: NEON_GREEN }} />
     </div>
     <span className="text-xs text-muted-foreground group-hover:text-foreground text-center">{label}</span>
   </Link>
@@ -132,7 +132,6 @@ export default function Dashboard() {
         <p className="text-xs text-muted-foreground">{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
         <StatCard title="Total Members" value={stats.totalMembers} icon={Users} />
         <StatCard title="Active Members" value={stats.activeMembers} icon={UserCheck} change={`${stats.newThisMonth} new`} changeType="positive" />
@@ -152,22 +151,21 @@ export default function Dashboard() {
         <StatCard title="New Leads" value={(stats.newThisMonth) || 0} icon={Target} />
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard title="Revenue Trend">
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={mockRevenue}>
               <defs>
                 <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#D4FF00" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#D4FF00" stopOpacity={0} />
+                  <stop offset="0%" stopColor={NEON_GREEN} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={NEON_GREEN} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
               <XAxis dataKey="month" stroke="#666" fontSize={11} />
               <YAxis stroke="#666" fontSize={11} />
               <Tooltip contentStyle={{ background: '#111', border: '1px solid #242424', borderRadius: 8, color: '#fff' }} />
-              <Area type="monotone" dataKey="revenue" stroke="#D4FF00" fill="url(#revGrad)" strokeWidth={2} />
+              <Area type="monotone" dataKey="revenue" stroke={NEON_GREEN} fill="url(#revGrad)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -179,7 +177,7 @@ export default function Dashboard() {
               <XAxis dataKey="day" stroke="#666" fontSize={11} />
               <YAxis stroke="#666" fontSize={11} />
               <Tooltip contentStyle={{ background: '#111', border: '1px solid #242424', borderRadius: 8, color: '#fff' }} />
-              <Bar dataKey="count" fill="#D4FF00" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" fill={NEON_GREEN} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -216,7 +214,6 @@ export default function Dashboard() {
         </ChartCard>
       </div>
 
-      {/* Quick Actions */}
       <div className="glass-card rounded-xl p-5">
         <h3 className="text-sm font-display font-semibold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-10 gap-2">
