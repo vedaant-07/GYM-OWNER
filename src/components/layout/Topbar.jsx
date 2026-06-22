@@ -5,6 +5,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '@/lib/ThemeContext';
 
+const NEON_GREEN = '#20c55d';
+
 export default function Topbar({ onMenuClick }) {
   const [user, setUser] = useState(null);
   const { theme, toggleTheme } = useTheme();
@@ -18,7 +20,6 @@ export default function Topbar({ onMenuClick }) {
     base44.auth.logout('/login');
   };
 
-  // Build breadcrumb from path
   const crumbs = location.pathname.split('/').filter(b => b && b !== 'dashboard');
 
   return (
@@ -29,7 +30,6 @@ export default function Topbar({ onMenuClick }) {
         borderBottom: '1px solid hsl(var(--border))',
       }}
     >
-      {/* Left */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenuClick}
@@ -38,7 +38,6 @@ export default function Topbar({ onMenuClick }) {
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Breadcrumb */}
         <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground">
           <span className="font-medium text-foreground">SE7EN FIT</span>
           {crumbs.map((crumb, i) => (
@@ -56,9 +55,7 @@ export default function Topbar({ onMenuClick }) {
         </div>
       </div>
 
-      {/* Right */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {/* Theme toggle */}
         <button
           onClick={toggleTheme}
           className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
@@ -67,7 +64,6 @@ export default function Topbar({ onMenuClick }) {
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
-        {/* Notifications */}
         <Link
           to="/notifications"
           className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
@@ -75,21 +71,20 @@ export default function Topbar({ onMenuClick }) {
           <Bell className="w-4 h-4" />
           <span
             className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-            style={{ background: '#20c55d' }}
+            style={{ background: NEON_GREEN }}
           />
         </Link>
 
-        {/* Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-secondary transition-colors outline-none">
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              style={{ background: '#D4FF00', color: '#000' }}
+              style={{ background: NEON_GREEN, color: '#000' }}
             >
-              {user?.full_name?.charAt(0)?.toUpperCase() || 'O'}
+              {user?.full_name?.charAt(0)?.toUpperCase() || user?.name?.charAt(0)?.toUpperCase() || 'O'}
             </div>
             <span className="hidden md:block text-sm font-medium max-w-[120px] truncate">
-              {user?.full_name || 'Gym Owner'}
+              {user?.full_name || user?.name || 'Gym Owner'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
           </DropdownMenuTrigger>
