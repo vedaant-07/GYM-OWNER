@@ -68,7 +68,7 @@
     --ring: 145 72% 40%;
     --chart-1: 145 72% 40%;
     --chart-2: 142 71% 40%;
-    --chart-3: 48 96% 50%;
+    --chart-3: 145 72% 40%;
     --chart-4: 0 84% 60%;
     --chart-5: 199 89% 48%;
     --sidebar-background: 0 0% 100%;
@@ -103,7 +103,7 @@
     --ring: 145 72% 47%;
     --chart-1: 145 72% 47%;
     --chart-2: 142 71% 45%;
-    --chart-3: 48 96% 53%;
+    --chart-3: 145 72% 47%;
     --chart-4: 0 84% 60%;
     --chart-5: 199 89% 48%;
     --sidebar-background: 0 0% 4%;
@@ -140,11 +140,11 @@
 .glass-card { border-radius: 0.75rem; }
 
 .dark .glass-card-hover:hover {
-  border-color: rgba(212,255,0,0.2);
-  box-shadow: 0 0 30px rgba(212,255,0,0.06);
+  border-color: rgba(32,197,93,0.28);
+  box-shadow: 0 0 30px rgba(32,197,93,0.08);
 }
 .light .glass-card-hover:hover {
-  border-color: rgba(101,163,13,0.3);
+  border-color: rgba(32,197,93,0.32);
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
