@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+const NEON_GREEN = '#20c55d';
+
 export default function StatCard({ title, value, icon: Icon, change, changeType, subtitle }) {
   return (
     <motion.div
@@ -20,8 +22,8 @@ export default function StatCard({ title, value, icon: Icon, change, changeType,
           {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
         </div>
         {Icon && (
-          <div className="p-2.5 rounded-lg ml-3 flex-shrink-0" style={{ background: 'rgba(212,255,0,0.1)' }}>
-            <Icon className="w-5 h-5" style={{ color: '#D4FF00' }} />
+          <div className="p-2.5 rounded-lg ml-3 flex-shrink-0" style={{ background: 'rgba(32,197,93,0.12)' }}>
+            <Icon className="w-5 h-5" style={{ color: NEON_GREEN }} />
           </div>
         )}
       </div>
