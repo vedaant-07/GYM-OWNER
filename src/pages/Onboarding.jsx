@@ -9,22 +9,26 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { isPhone10, normalizePhone10 } from '@/lib/phone';
 
 const STEPS = ['Owner Info', 'Gym Details', 'Operations', 'Partnership'];
 const NEON_GREEN = '#20c55d';
 const NEON_GREEN_SOFT = 'rgba(32,197,93,0.16)';
 
-const FormField = memo(function FormField({ label, value, onChange, type = 'text', placeholder, required }) {
+const FormField = memo(function FormField({ label, value, onChange, type = 'text', placeholder, required, phone }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-sm text-muted-foreground tracking-normal">
         {label}{required && <span className="text-red-400 ml-1">*</span>}
       </Label>
       <Input
-        type={type}
+        type={phone ? 'tel' : type}
+        inputMode={phone ? 'numeric' : undefined}
+        maxLength={phone ? 10 : undefined}
+        pattern={phone ? '[0-9]{10}' : undefined}
         placeholder={placeholder}
         value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(phone ? normalizePhone10(e.target.value) : e.target.value)}
         className="bg-secondary border-border text-foreground focus-visible:ring-primary tracking-normal"
       />
     </div>
@@ -40,14 +44,14 @@ export default function Onboarding() {
   const [form, setForm] = useState({
     owner_name: '', gym_name: '', address: '', city: '', phone: '', email: '',
     gst_number: '', opening_hours: '', amenities: [], description: '',
-    gym_capacity: '', trainer_count: '', staff_count: '', bank_details: '',
+    gym_capacity: '', trainer_count: '', staff_count: '', account_details: '',
     partnership_status: 'pending'
   });
 
   const ownerDefaults = useMemo(() => ({
     owner_name: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
+    phone: normalizePhone10(user?.phone || ''),
   }), [user?.name, user?.email, user?.phone]);
 
   useEffect(() => {
@@ -63,6 +67,7 @@ export default function Onboarding() {
 
   const validateStep = () => {
     if (step === 0 && (!form.owner_name || !form.email || !form.phone)) return 'Please complete owner name, email and phone number.';
+    if (step === 0 && !isPhone10(form.phone)) return 'Phone number must be exactly 10 digits.';
     if (step === 1 && (!form.gym_name || !form.address || !form.city)) return 'Please complete gym name, address and city.';
     return '';
   };
@@ -89,7 +94,7 @@ export default function Onboarding() {
         owner_name: form.owner_name,
         gym_name: form.gym_name,
         email: form.email,
-        mobile: form.phone,
+        mobile: normalizePhone10(form.phone),
         address: form.address,
         city: form.city,
         description: form.description,
@@ -120,9 +125,7 @@ export default function Onboarding() {
         <div className="flex items-center justify-center gap-2 mb-8">
           {STEPS.map((s, i) => (
             <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                i <= step ? 'text-black neon-glow' : 'text-muted-foreground'
-              }`} style={i <= step ? { background: NEON_GREEN } : { background: '#1a1a1a' }}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${i <= step ? 'text-black neon-glow' : 'text-muted-foreground'}`} style={i <= step ? { background: NEON_GREEN } : { background: '#1a1a1a' }}>
                 {i < step ? <Check className="w-4 h-4" /> : i + 1}
               </div>
               {i < STEPS.length - 1 && <div className="w-8 h-0.5" style={{ background: i < step ? NEON_GREEN : '#1a1a1a' }} />}
@@ -140,70 +143,52 @@ export default function Onboarding() {
           </p>
 
           <div className="space-y-4">
-            {step === 0 && (
-              <>
-                <FormField label="Owner Name" value={form.owner_name} onChange={(value) => update('owner_name', value)} placeholder="Your full name" required />
-                <FormField label="Email" value={form.email} onChange={(value) => update('email', value)} type="email" placeholder="owner@gym.com" required />
-                <FormField label="Phone Number" value={form.phone} onChange={(value) => update('phone', value)} placeholder="+91 9876543210" required />
-              </>
-            )}
-            {step === 1 && (
-              <>
-                <FormField label="Gym Name" value={form.gym_name} onChange={(value) => update('gym_name', value)} placeholder="Your gym name" required />
-                <FormField label="Address" value={form.address} onChange={(value) => update('address', value)} placeholder="Full gym address" required />
-                <FormField label="City" value={form.city} onChange={(value) => update('city', value)} placeholder="City" required />
-                <FormField label="GST Number" value={form.gst_number} onChange={(value) => update('gst_number', value)} placeholder="Optional - not saved yet" />
-                <div className="space-y-1.5">
-                  <Label className="text-sm text-muted-foreground tracking-normal">Description</Label>
-                  <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Tell members about your gym" className="bg-secondary border-border text-foreground focus-visible:ring-primary tracking-normal" />
-                </div>
-              </>
-            )}
-            {step === 2 && (
-              <>
-                <FormField label="Opening Hours" value={form.opening_hours} onChange={(value) => update('opening_hours', value)} placeholder="e.g. 5 AM - 11 PM" />
-                <FormField label="Gym Capacity" value={form.gym_capacity} onChange={(value) => update('gym_capacity', value)} type="number" placeholder="Max members" />
-                <FormField label="Trainer Count" value={form.trainer_count} onChange={(value) => update('trainer_count', value)} type="number" placeholder="Number of trainers" />
-                <FormField label="Staff Count" value={form.staff_count} onChange={(value) => update('staff_count', value)} type="number" placeholder="Number of staff" />
-                <FormField label="Bank/Payout Details" value={form.bank_details} onChange={(value) => update('bank_details', value)} placeholder="Account details (optional)" />
-              </>
-            )}
-            {step === 3 && (
-              <>
-                <div className="space-y-1.5">
-                  <Label className="text-sm text-muted-foreground tracking-normal">SE7EN FIT Partnership Status</Label>
-                  <Select value={form.partnership_status} onValueChange={(v) => update('partnership_status', v)}>
-                    <SelectTrigger className="bg-secondary border-border focus:ring-primary tracking-normal">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="active">Active Partner</SelectItem>
-                      <SelectItem value="premium">Premium Partner</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="rounded-xl p-4 mt-4" style={{ background: NEON_GREEN_SOFT, border: `1px solid ${NEON_GREEN}33` }}>
-                  <p className="text-sm text-muted-foreground tracking-normal">
-                    By completing onboarding, you agree to the SE7EN FIT Gym Owner terms and data access policies. You'll only have access to your own gym data and members.
-                  </p>
-                </div>
-              </>
-            )}
+            {step === 0 && <>
+              <FormField label="Owner Name" value={form.owner_name} onChange={(value) => update('owner_name', value)} placeholder="Your full name" required />
+              <FormField label="Email" value={form.email} onChange={(value) => update('email', value)} type="email" placeholder="owner@gym.com" required />
+              <FormField label="Phone Number" value={form.phone} onChange={(value) => update('phone', value)} placeholder="9876543210" phone required />
+            </>}
+            {step === 1 && <>
+              <FormField label="Gym Name" value={form.gym_name} onChange={(value) => update('gym_name', value)} placeholder="Your gym name" required />
+              <FormField label="Address" value={form.address} onChange={(value) => update('address', value)} placeholder="Full gym address" required />
+              <FormField label="City" value={form.city} onChange={(value) => update('city', value)} placeholder="City" required />
+              <FormField label="GST Number" value={form.gst_number} onChange={(value) => update('gst_number', value)} placeholder="Optional - not saved yet" />
+              <div className="space-y-1.5">
+                <Label className="text-sm text-muted-foreground tracking-normal">Description</Label>
+                <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Tell members about your gym" className="bg-secondary border-border text-foreground focus-visible:ring-primary tracking-normal" />
+              </div>
+            </>}
+            {step === 2 && <>
+              <FormField label="Opening Hours" value={form.opening_hours} onChange={(value) => update('opening_hours', value)} placeholder="e.g. 5 AM - 11 PM" />
+              <FormField label="Gym Capacity" value={form.gym_capacity} onChange={(value) => update('gym_capacity', value)} type="number" placeholder="Max members" />
+              <FormField label="Trainer Count" value={form.trainer_count} onChange={(value) => update('trainer_count', value)} type="number" placeholder="Number of trainers" />
+              <FormField label="Staff Count" value={form.staff_count} onChange={(value) => update('staff_count', value)} type="number" placeholder="Number of staff" />
+              <FormField label="Account Details" value={form.account_details} onChange={(value) => update('account_details', value)} placeholder="Optional" />
+            </>}
+            {step === 3 && <>
+              <div className="space-y-1.5">
+                <Label className="text-sm text-muted-foreground tracking-normal">SE7EN FIT Partnership Status</Label>
+                <Select value={form.partnership_status} onValueChange={(v) => update('partnership_status', v)}>
+                  <SelectTrigger className="bg-secondary border-border focus:ring-primary tracking-normal"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="active">Active Partner</SelectItem>
+                    <SelectItem value="premium">Premium Partner</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-xl p-4 mt-4" style={{ background: NEON_GREEN_SOFT, border: `1px solid ${NEON_GREEN}33` }}>
+                <p className="text-sm text-muted-foreground tracking-normal">By completing onboarding, you agree to the SE7EN FIT Gym Owner terms.</p>
+              </div>
+            </>}
           </div>
 
           <div className="flex justify-between mt-6 pt-4" style={{ borderTop: '1px solid #1a1a1a' }}>
-            <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={step === 0} className="text-muted-foreground tracking-normal">
-              <ChevronLeft className="w-4 h-4 mr-1" /> Back
-            </Button>
+            <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={step === 0} className="text-muted-foreground tracking-normal"><ChevronLeft className="w-4 h-4 mr-1" /> Back</Button>
             {step < STEPS.length - 1 ? (
-              <Button onClick={nextStep} className="font-semibold hover:opacity-90 tracking-normal" style={{ background: NEON_GREEN, color: '#000' }}>
-                Next <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+              <Button onClick={nextStep} className="font-semibold hover:opacity-90 tracking-normal" style={{ background: NEON_GREEN, color: '#000' }}>Next <ChevronRight className="w-4 h-4 ml-1" /></Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={saving} className="font-semibold hover:opacity-90 tracking-normal" style={{ background: NEON_GREEN, color: '#000' }}>
-                {saving ? 'Setting up...' : 'Launch Gym Portal'} <Check className="w-4 h-4 ml-1" />
-              </Button>
+              <Button onClick={handleSubmit} disabled={saving} className="font-semibold hover:opacity-90 tracking-normal" style={{ background: NEON_GREEN, color: '#000' }}>{saving ? 'Setting up...' : 'Launch Gym Portal'} <Check className="w-4 h-4 ml-1" /></Button>
             )}
           </div>
         </div>
