@@ -7,6 +7,7 @@ import { UserPlus, Mail, Lock, Loader2, User, Phone, Building2 } from "lucide-re
 import AuthLayout from "@/components/AuthLayout";
 import { useAuth } from "@/lib/AuthContext";
 import { renderGoogleSignInButton } from "@/lib/google-web-auth";
+import { isPhone10, normalizePhone10 } from "@/lib/phone";
 
 export default function Register() {
   const { register, loginWithGoogleCredential } = useAuth();
@@ -60,13 +61,17 @@ export default function Register() {
     const formData = new FormData(e.currentTarget);
     const ownerName = String(formData.get("ownerName") || "").trim();
     const gymName = String(formData.get("gymName") || "").trim();
-    const phone = String(formData.get("phone") || "").trim();
+    const phone = normalizePhone10(formData.get("phone") || "");
     const email = String(formData.get("email") || "").trim();
     const password = String(formData.get("password") || "");
     const confirmPassword = String(formData.get("confirmPassword") || "");
 
     if (!ownerName) {
       showError("Please enter owner name");
+      return;
+    }
+    if (phone && !isPhone10(phone)) {
+      showError("Phone number must be exactly 10 digits");
       return;
     }
     if (!email) {
@@ -98,6 +103,10 @@ export default function Register() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const limitPhone = (event) => {
+    event.currentTarget.value = normalizePhone10(event.currentTarget.value);
   };
 
   return (
@@ -153,7 +162,7 @@ export default function Register() {
           <Label htmlFor="phone">Mobile Number</Label>
           <div className="relative">
             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+91 9876543210" className="pl-10 h-12" />
+            <Input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel" maxLength={10} pattern="[0-9]{10}" placeholder="9876543210" onInput={limitPhone} className="pl-10 h-12" />
           </div>
         </div>
         <div className="space-y-2">
