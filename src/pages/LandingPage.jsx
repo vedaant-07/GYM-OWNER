@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -23,7 +23,6 @@ import {
   Trophy,
   Users,
   Video,
-  Zap,
 } from 'lucide-react';
 
 const ACCENT = '#20c55d';
@@ -50,6 +49,149 @@ function Grain() {
         backgroundSize: '128px',
       }}
     />
+  );
+}
+
+function IntroScreen({ onDone }) {
+  const [phase, setPhase] = useState(0);
+  const letters = ['S', 'E', '7', 'E', 'N'];
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      const t = setTimeout(onDone, 900);
+      return () => clearTimeout(t);
+    }
+
+    const t1 = setTimeout(() => setPhase(1), 1200);
+    const t2 = setTimeout(() => setPhase(2), 2350);
+    const t3 = setTimeout(onDone, 3000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [onDone]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden"
+      style={{ background: BG }}
+      animate={phase === 2 ? { opacity: 0 } : { opacity: 1 }}
+      transition={phase === 2 ? { duration: 0.55, ease: [0.4, 0, 0.2, 1] } : {}}
+    >
+      <Grain />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.3 }}
+        animate={phase >= 1 ? { opacity: 0.5, scale: 1 } : {}}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: 'absolute',
+          width: 'min(700px, 90vw)',
+          height: 'min(700px, 90vw)',
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${ACCENT}30 0%, transparent 65%)`,
+          pointerEvents: 'none',
+        }}
+      />
+
+      <motion.div
+        initial={{ x: '-110%' }}
+        animate={{ x: '220%' }}
+        transition={{ duration: 1.05, delay: 1.15, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          background: `linear-gradient(105deg, transparent 30%, ${ACCENT}25 50%, transparent 70%)`,
+        }}
+      />
+
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1 }}>
+        {letters.map((letter, index) => (
+          <motion.span
+            key={`${letter}-${index}`}
+            initial={{ y: '-120vh', opacity: 0, filter: 'blur(8px)' }}
+            animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+            transition={{ delay: index * 0.09, duration: 0.72, ease: [0.22, 1.2, 0.36, 1] }}
+            style={{
+              fontSize: 'clamp(64px, 16vw, 180px)',
+              fontWeight: 950,
+              fontFamily: "'Space Grotesk', sans-serif",
+              letterSpacing: '-0.045em',
+              color: letter === '7' ? ACCENT : '#fff',
+              textShadow: phase >= 1
+                ? letter === '7'
+                  ? `0 0 50px ${ACCENT}, 0 0 100px ${ACCENT}60`
+                  : '0 0 30px rgba(255,255,255,0.15)'
+                : 'none',
+              display: 'inline-block',
+              userSelect: 'none',
+              transition: 'text-shadow 0.6s ease',
+            }}
+          >
+            {letter}
+          </motion.span>
+        ))}
+        <span style={{ display: 'inline-block', width: 'clamp(10px, 2.5vw, 36px)' }} />
+        <motion.span
+          initial={{ y: '-120vh', opacity: 0, filter: 'blur(8px)' }}
+          animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+          transition={{ delay: 0.55, duration: 0.72, ease: [0.22, 1.2, 0.36, 1] }}
+          style={{
+            fontSize: 'clamp(64px, 16vw, 180px)',
+            fontWeight: 950,
+            fontFamily: "'Space Grotesk', sans-serif",
+            letterSpacing: '-0.045em',
+            color: ACCENT,
+            textShadow: phase >= 1 ? `0 0 50px ${ACCENT}, 0 0 100px ${ACCENT}60` : 'none',
+            display: 'inline-block',
+            userSelect: 'none',
+            transition: 'text-shadow 0.6s ease',
+          }}
+        >
+          FIT
+        </motion.span>
+      </div>
+
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.65, delay: 0.2 }}
+        style={{
+          marginTop: 'clamp(12px, 2vw, 24px)',
+          fontSize: 'clamp(10px, 1.4vw, 14px)',
+          fontWeight: 750,
+          color: ACCENT,
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          fontFamily: "'Inter', sans-serif",
+          userSelect: 'none',
+        }}
+      >
+        INDIA'S PREMIUM FITNESS ECOSYSTEM
+      </motion.p>
+
+      <button
+        onClick={onDone}
+        style={{
+          position: 'absolute',
+          bottom: 28,
+          right: 28,
+          color: '#555',
+          fontSize: 11,
+          cursor: 'pointer',
+          background: 'none',
+          border: 'none',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          fontFamily: "'Inter', sans-serif",
+          padding: '6px 10px',
+        }}
+      >
+        Skip →
+      </button>
+    </motion.div>
   );
 }
 
@@ -318,6 +460,16 @@ function Footer() {
 }
 
 export default function LandingPage() {
+  const shouldShowIntro = !sessionStorage.getItem('se7en-intro-shown');
+  const [showIntro, setShowIntro] = useState(shouldShowIntro);
+  const [mainVisible, setMainVisible] = useState(!shouldShowIntro);
+
+  const handleIntroDone = () => {
+    sessionStorage.setItem('se7en-intro-shown', '1');
+    setShowIntro(false);
+    setMainVisible(true);
+  };
+
   return (
     <>
       <style>{`
@@ -328,7 +480,8 @@ export default function LandingPage() {
           .landing-nav-links { display: none !important; }
         }
       `}</style>
-      <div style={{ background: BG, minHeight: '100vh', overflowX: 'hidden', color: '#fff' }}>
+      {showIntro && <IntroScreen onDone={handleIntroDone} />}
+      <div style={{ background: BG, minHeight: '100vh', overflowX: 'hidden', color: '#fff', opacity: mainVisible ? 1 : 0, transition: 'opacity 0.65s ease' }}>
         <Grain />
         <Navbar />
         <HeroSection />
