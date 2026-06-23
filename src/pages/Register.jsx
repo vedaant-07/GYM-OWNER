@@ -1,55 +1,103 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Mail, Lock, Loader2, User, Phone, Building2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
-import GoogleIcon from "@/components/GoogleIcon";
 import { useAuth } from "@/lib/AuthContext";
+import { renderGoogleSignInButton } from "@/lib/google-web-auth";
 
 export default function Register() {
-  const { register } = useAuth();
-  const [ownerName, setOwnerName] = useState("");
-  const [gymName, setGymName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const { register, loginWithGoogleCredential } = useAuth();
+  const googleButtonRef = useRef(null);
+  const errorTimerRef = useRef(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const showError = (message) => {
+    setError(message);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setError(""), 2000);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    renderGoogleSignInButton({
+      element: googleButtonRef.current,
+      onError: (message) => {
+        if (!cancelled) showError(message);
+      },
+      onCredential: async (credential) => {
+        if (cancelled) return;
+        setError("");
+        setGoogleLoading(true);
+        try {
+          await loginWithGoogleCredential(credential);
+          window.location.href = "/onboarding";
+        } catch (err) {
+          showError(err.message || "Google registration failed. Please try again or use email registration.");
+        } finally {
+          if (!cancelled) setGoogleLoading(false);
+        }
+      },
+    }).catch((err) => {
+      if (!cancelled) showError(err.message || "Google registration could not load.");
+    });
+
+    return () => {
+      cancelled = true;
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, [loginWithGoogleCredential]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!ownerName.trim()) {
-      setError("Please enter owner name");
+
+    const formData = new FormData(e.currentTarget);
+    const ownerName = String(formData.get("ownerName") || "").trim();
+    const gymName = String(formData.get("gymName") || "").trim();
+    const phone = String(formData.get("phone") || "").trim();
+    const email = String(formData.get("email") || "").trim();
+    const password = String(formData.get("password") || "");
+    const confirmPassword = String(formData.get("confirmPassword") || "");
+
+    if (!ownerName) {
+      showError("Please enter owner name");
+      return;
+    }
+    if (!email) {
+      showError("Please enter email");
+      return;
+    }
+    if (!password) {
+      showError("Please enter password");
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      showError("Passwords do not match");
       return;
     }
+
     setLoading(true);
     try {
       await register({
-        name: ownerName.trim(),
-        ownerName: ownerName.trim(),
-        gymName: gymName.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
+        name: ownerName,
+        ownerName,
+        gymName,
+        phone,
+        email,
         password,
       });
       window.location.href = "/onboarding";
     } catch (err) {
-      setError(err.message || "Registration failed");
+      showError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogle = () => {
-    setError("Google registration for the owner website needs web OAuth setup. Use email registration for now.");
   };
 
   return (
@@ -66,14 +114,10 @@ export default function Register() {
         </>
       }
     >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
-      >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
+      <div className="w-full mb-6 min-h-[48px] flex items-center justify-center">
+        <div ref={googleButtonRef} className="w-full flex justify-center" />
+        {googleLoading && <Loader2 className="w-4 h-4 ml-3 animate-spin text-primary" />}
+      </div>
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
@@ -94,43 +138,43 @@ export default function Register() {
         <div className="space-y-2">
           <Label htmlFor="ownerName">Owner Name</Label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input id="ownerName" placeholder="Your full name" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className="pl-10 h-12" required />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input id="ownerName" name="ownerName" autoComplete="name" placeholder="Your full name" className="pl-10 h-12" required />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="gymName">Gym Name</Label>
           <div className="relative">
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input id="gymName" placeholder="Your gym name" value={gymName} onChange={(e) => setGymName(e.target.value)} className="pl-10 h-12" />
+            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input id="gymName" name="gymName" autoComplete="organization" placeholder="Your gym name" className="pl-10 h-12" />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Mobile Number</Label>
           <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input id="phone" placeholder="+91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12" />
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+91 9876543210" className="pl-10 h-12" />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input id="email" type="email" autoComplete="email" placeholder="owner@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12" required />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+            <Input id="email" name="email" type="email" autoComplete="email" placeholder="owner@example.com" className="pl-10 h-12" required />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input id="password" type="password" autoComplete="new-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-12" required />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+            <Input id="password" name="password" type="password" autoComplete="new-password" placeholder="••••••••" className="pl-10 h-12" required />
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input id="confirm" type="password" autoComplete="new-password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-12" required />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+            <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" placeholder="••••••••" className="pl-10 h-12" required />
           </div>
         </div>
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
