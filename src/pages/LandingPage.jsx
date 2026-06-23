@@ -1,657 +1,299 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Brain, ScanLine, Dumbbell, LayoutDashboard, Zap, Trophy, Heart,
-  Users, ClipboardCheck, CreditCard, Megaphone, BarChart3, MessageSquare,
-  ChevronRight, ArrowRight, Star, CheckCircle, X
+  Activity,
+  ArrowRight,
+  BarChart3,
+  Brain,
+  CheckCircle,
+  ClipboardCheck,
+  CreditCard,
+  Dumbbell,
+  Gift,
+  Heart,
+  LayoutDashboard,
+  Megaphone,
+  MessageSquare,
+  Salad,
+  ScanLine,
+  Shield,
+  Smartphone,
+  Star,
+  Trophy,
+  Users,
+  Video,
+  Zap,
 } from 'lucide-react';
 
-/* ─── BRAND COLORS ─── */
 const ACCENT = '#20c55d';
-const ACCENT_DIM = 'rgba(32,197,93,0.15)';
-const ACCENT_GLOW = 'rgba(32,197,93,0.35)';
+const ACCENT_DIM = 'rgba(32,197,93,0.13)';
+const BG = '#050505';
+const CARD = '#0d0d0d';
+const BORDER = '#1e1e1e';
 
-/* ─── GRAIN OVERLAY ─── */
-const Grain = () => (
-  <div
-    className="pointer-events-none fixed inset-0 z-[1] opacity-[0.035]"
-    style={{
-      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-      backgroundRepeat: 'repeat',
-      backgroundSize: '128px',
-    }}
-  />
-);
+const NAV_ITEMS = [
+  { label: 'For Users', href: '#for-users' },
+  { label: 'Gym Owners', href: '#gym-owners' },
+  { label: 'App Features', href: '#app-features' },
+  { label: 'AI Tools', href: '#ai-tools' },
+  { label: 'Pricing', href: '#pricing' },
+];
 
-/* ─── CSS 3D DUMBBELL ─── */
-const CssDumbbell = ({ style = {} }) => (
-  <div style={{ perspective: '600px', ...style }}>
-    <div style={{
-      width: 120, height: 40, position: 'relative',
-      animation: 'dumbbellSpin 8s linear infinite',
-      transformStyle: 'preserve-3d',
-    }}>
-      {/* Bar */}
-      <div style={{
-        position: 'absolute', top: '50%', left: '18%', right: '18%',
-        height: 8, marginTop: -4,
-        background: 'linear-gradient(90deg, #1a1a1a, #2a2a2a, #1a1a1a)',
-        borderRadius: 4,
-        boxShadow: `0 0 10px ${ACCENT_GLOW}`,
-      }} />
-      {/* Left plate outer */}
-      <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 22, height: 40, background: 'linear-gradient(180deg, #1e1e1e, #111)', borderRadius: 4, boxShadow: `0 0 14px ${ACCENT_GLOW}, inset 0 0 6px rgba(32,197,93,0.1)`, border: `1px solid ${ACCENT}30` }} />
-      {/* Right plate outer */}
-      <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', width: 22, height: 40, background: 'linear-gradient(180deg, #1e1e1e, #111)', borderRadius: 4, boxShadow: `0 0 14px ${ACCENT_GLOW}, inset 0 0 6px rgba(32,197,93,0.1)`, border: `1px solid ${ACCENT}30` }} />
-      {/* Left plate inner */}
-      <div style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', width: 14, height: 30, background: '#161616', borderRadius: 3, border: `1px solid ${ACCENT}20` }} />
-      {/* Right plate inner */}
-      <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', width: 14, height: 30, background: '#161616', borderRadius: 3, border: `1px solid ${ACCENT}20` }} />
-    </div>
-  </div>
-);
-
-/* ─── INTRO SCREEN ─── */
-function IntroScreen({ onDone }) {
-  const [phase, setPhase] = useState(0);
-  // phase 0 = dropping, 1 = landed+glow, 2 = exit
-
-  const prefersReducedMotion = typeof window !== 'undefined'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      const t = setTimeout(() => onDone(), 1500);
-      return () => clearTimeout(t);
-    }
-    // t1: glow settles after letters land (~1.2s), t2: start fade, t3: unmount
-    const t1 = setTimeout(() => setPhase(1), 1300);
-    const t2 = setTimeout(() => setPhase(2), 2600);
-    const t3 = setTimeout(() => onDone(), 3300);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onDone, prefersReducedMotion]);
-
-  // "SE7EN" letters + space + "FIT" as group
-  const letters = ['S', 'E', '7', 'E', 'N'];
-
-  if (prefersReducedMotion) {
-    return (
-      <motion.div
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
-        style={{ background: '#050505' }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: phase === 2 ? 0 : 1 }}
-        transition={{ duration: 0.8 }}
-        exit={{ opacity: 0 }}
-      >
-        <span style={{ fontSize: 'clamp(48px, 12vw, 120px)', fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", color: '#fff', letterSpacing: '-0.02em' }}>
-          SE7EN <span style={{ color: ACCENT }}>FIT</span>
-        </span>
-      </motion.div>
-    );
-  }
-
+function Grain() {
   return (
-    <motion.div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: '#050505' }}
-      animate={phase === 2 ? { opacity: 0 } : { opacity: 1 }}
-      transition={phase === 2 ? { duration: 0.7, ease: [0.4, 0, 0.2, 1] } : {}}
-    >
-      <Grain />
-
-      {/* Radial glow — appears on land */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.3 }}
-        animate={phase >= 1 ? { opacity: 0.55, scale: 1 } : {}}
-        transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
-        style={{
-          position: 'absolute',
-          width: 'min(700px, 90vw)', height: 'min(700px, 90vw)',
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${ACCENT}30 0%, transparent 65%)`,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Light sweep — fires once on load */}
-      <motion.div
-        initial={{ x: '-110%' }}
-        animate={{ x: '220%' }}
-        transition={{ duration: 1.1, delay: 1.3, ease: 'easeInOut' }}
-        style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: `linear-gradient(105deg, transparent 30%, ${ACCENT}25 50%, transparent 70%)`,
-        }}
-      />
-
-      {/* SE7EN — letters drop from top one by one */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1 }}>
-        {letters.map((l, i) => (
-          <motion.span
-            key={i}
-            initial={{ y: '-120vh', opacity: 0, filter: 'blur(8px)' }}
-            animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-            transition={{
-              delay: i * 0.09,
-              duration: 0.75,
-              ease: [0.22, 1.2, 0.36, 1], // spring overshoot feel
-            }}
-            style={{
-              fontSize: 'clamp(64px, 16vw, 180px)',
-              fontWeight: 900,
-              fontFamily: "'Space Grotesk', sans-serif",
-              letterSpacing: '-0.02em',
-              color: l === '7' ? ACCENT : '#ffffff',
-              textShadow: phase >= 1
-                ? l === '7'
-                  ? `0 0 50px ${ACCENT}, 0 0 100px ${ACCENT}60`
-                  : `0 0 30px rgba(255,255,255,0.15)`
-                : 'none',
-              display: 'inline-block',
-              userSelect: 'none',
-              transition: 'text-shadow 0.6s ease',
-            }}
-          >
-            {l}
-          </motion.span>
-        ))}
-
-        {/* Spacer */}
-        <span style={{ display: 'inline-block', width: 'clamp(10px, 2.5vw, 36px)' }} />
-
-        {/* FIT drops slightly after, as a group */}
-        <motion.span
-          initial={{ y: '-120vh', opacity: 0, filter: 'blur(8px)' }}
-          animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-          transition={{ delay: 0.55, duration: 0.75, ease: [0.22, 1.2, 0.36, 1] }}
-          style={{
-            fontSize: 'clamp(64px, 16vw, 180px)',
-            fontWeight: 900,
-            fontFamily: "'Space Grotesk', sans-serif",
-            letterSpacing: '-0.02em',
-            color: ACCENT,
-            textShadow: phase >= 1 ? `0 0 50px ${ACCENT}, 0 0 100px ${ACCENT}60` : 'none',
-            display: 'inline-block',
-            userSelect: 'none',
-            transition: 'text-shadow 0.6s ease',
-          }}
-        >
-          FIT
-        </motion.span>
-      </div>
-
-      {/* Tagline fades in after land */}
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.7, delay: 0.2 }}
-        style={{
-          marginTop: 'clamp(12px, 2vw, 24px)',
-          fontSize: 'clamp(10px, 1.4vw, 14px)',
-          fontWeight: 600,
-          color: ACCENT,
-          letterSpacing: '0.3em',
-          textTransform: 'uppercase',
-          fontFamily: "'Inter', sans-serif",
-          userSelect: 'none',
-        }}
-      >
-        INDIA'S PREMIUM FITNESS ECOSYSTEM
-      </motion.p>
-
-      {/* Skip */}
-      <button
-        onClick={onDone}
-        style={{
-          position: 'absolute', bottom: 28, right: 28,
-          color: '#444', fontSize: 11, cursor: 'pointer',
-          background: 'none', border: 'none', letterSpacing: '0.12em',
-          textTransform: 'uppercase', fontFamily: "'Inter', sans-serif",
-          padding: '6px 10px',
-        }}
-      >
-        Skip →
-      </button>
-    </motion.div>
+    <div
+      className="pointer-events-none fixed inset-0 z-[1] opacity-[0.035]"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'repeat',
+        backgroundSize: '128px',
+      }}
+    />
   );
 }
 
-/* ─── NAV ─── */
 function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', fn);
-    return () => window.removeEventListener('scroll', fn);
-  }, []);
-
   return (
-    <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.2, duration: 0.6 }}
+    <nav
       style={{
-        position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 50, display: 'flex', alignItems: 'center', gap: 32,
-        padding: '10px 20px', borderRadius: 100,
-        background: scrolled ? 'rgba(5,5,5,0.92)' : 'rgba(17,17,17,0.75)',
-        backdropFilter: 'blur(20px)',
-        border: `1px solid ${scrolled ? '#333' : '#2a2a2a'}`,
-        transition: 'background 0.3s, border 0.3s',
-        width: 'fit-content', whiteSpace: 'nowrap',
+        position: 'fixed',
+        top: 18,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 24,
+        padding: '10px 18px',
+        borderRadius: 999,
+        background: 'rgba(10,10,10,0.82)',
+        border: '1px solid #242424',
+        backdropFilter: 'blur(18px)',
+        boxShadow: '0 18px 60px rgba(0,0,0,0.45)',
+        width: 'min(92vw, 880px)',
+        whiteSpace: 'nowrap',
       }}
     >
-      <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 16, color: ACCENT, letterSpacing: '-0.01em' }}>
-        SE7EN FIT
-      </span>
-      <div style={{ display: 'flex', gap: 24 }}>
-        {['For Users', 'Gym Owners', 'Pricing'].map(l => (
-          <a key={l} href={`#${l.toLowerCase().replace(' ','-')}`}
-            style={{ fontSize: 13, color: '#aaa', textDecoration: 'none', fontFamily: "'Inter', sans-serif", fontWeight: 500, transition: 'color 0.2s' }}
-            onMouseEnter={e => e.target.style.color = '#fff'}
-            onMouseLeave={e => e.target.style.color = '#aaa'}
-          >{l}</a>
+      <a href="#home" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
+        <span style={{ width: 32, height: 32, borderRadius: 10, background: ACCENT, color: '#000', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 13 }}>S7</span>
+        <span style={{ color: ACCENT, fontWeight: 900, fontSize: 15, fontFamily: "'Space Grotesk', sans-serif" }}>SE7EN FIT</span>
+      </a>
+
+      <div className="landing-nav-links" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, flex: 1 }}>
+        {NAV_ITEMS.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            style={{ color: '#a7a7a7', textDecoration: 'none', fontSize: 13, fontWeight: 600, fontFamily: "'Inter', sans-serif" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#a7a7a7'; }}
+          >
+            {item.label}
+          </a>
         ))}
       </div>
-      <Link to="/login">
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#000', background: ACCENT, padding: '7px 16px', borderRadius: 100, fontFamily: "'Inter', sans-serif", textDecoration: 'none', whiteSpace: 'nowrap' }}>
-          Owner Portal →
-        </div>
+
+      <Link to="/login" style={{ textDecoration: 'none', flexShrink: 0 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: '#000', background: ACCENT, padding: '9px 17px', borderRadius: 999, fontSize: 13, fontWeight: 800, fontFamily: "'Inter', sans-serif" }}>
+          Gym Management Tool <ArrowRight size={14} />
+        </span>
       </Link>
-    </motion.nav>
+    </nav>
   );
 }
 
-/* ─── FLOATING FEATURE CARD ─── */
-function FloatingCard({ icon: Icon, label, delay = 0, x = 0, y = 0, floatY = 10 }) {
+function Pill({ children }) {
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 999, border: `1px solid ${ACCENT}40`, background: ACCENT_DIM, color: ACCENT, fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+      {children}
+    </div>
+  );
+}
+
+function FeatureCard({ icon: Icon, title, desc }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ delay, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      style={{
-        position: 'absolute', left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`,
-        transform: 'translate(-50%, -50%)',
-        animation: `floatCard${Math.abs(x)} ${3 + delay}s ease-in-out infinite alternate`,
-      }}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -5, borderColor: `${ACCENT}55`, boxShadow: `0 24px 48px rgba(0,0,0,0.35), 0 0 22px ${ACCENT}12` }}
+      style={{ padding: 24, borderRadius: 18, background: CARD, border: `1px solid ${BORDER}`, transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s' }}
     >
-      <motion.div
-        animate={{ y: [0, -floatY, 0] }}
-        transition={{ duration: 3 + delay * 0.5, repeat: Infinity, ease: 'easeInOut' }}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
-          borderRadius: 12, background: 'rgba(17,17,17,0.9)',
-          border: `1px solid #2a2a2a`, backdropFilter: 'blur(12px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          cursor: 'default', userSelect: 'none', whiteSpace: 'nowrap',
-          transition: 'border-color 0.2s, box-shadow 0.2s',
-        }}
-        whileHover={{
-          borderColor: ACCENT + '50',
-          boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 0 20px ${ACCENT_DIM}`,
-        }}
-      >
-        <Icon size={14} style={{ color: ACCENT, flexShrink: 0 }} />
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#e5e5e5', fontFamily: "'Inter', sans-serif" }}>{label}</span>
-      </motion.div>
+      <div style={{ width: 42, height: 42, borderRadius: 12, background: ACCENT_DIM, border: `1px solid ${ACCENT}30`, display: 'grid', placeItems: 'center', marginBottom: 16 }}>
+        <Icon size={19} color={ACCENT} />
+      </div>
+      <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 800, marginBottom: 9, fontFamily: "'Space Grotesk', sans-serif" }}>{title}</h3>
+      <p style={{ color: '#777', fontSize: 13.5, lineHeight: 1.65, fontFamily: "'Inter', sans-serif" }}>{desc}</p>
     </motion.div>
   );
 }
 
-/* ─── HERO SECTION ─── */
+function SectionHeader({ eyebrow, title, highlight, desc }) {
+  return (
+    <div style={{ textAlign: 'center', marginBottom: 54 }}>
+      <Pill>{eyebrow}</Pill>
+      <h2 style={{ marginTop: 18, color: '#fff', fontSize: 'clamp(30px, 5vw, 54px)', lineHeight: 1.05, letterSpacing: '-0.035em', fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif" }}>
+        {title}<br /><span style={{ color: ACCENT }}>{highlight}</span>
+      </h2>
+      <p style={{ color: '#777', fontSize: 16, maxWidth: 660, margin: '18px auto 0', lineHeight: 1.75, fontFamily: "'Inter', sans-serif" }}>{desc}</p>
+    </div>
+  );
+}
+
 function HeroSection() {
   return (
-    <div style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050505' }}>
+    <section id="home" style={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '140px 24px 80px', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${ACCENT}14 0%, transparent 70%)` }} />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)', backgroundSize: '60px 60px', maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)' }} />
 
-      {/* Radial glow behind */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${ACCENT}14 0%, transparent 70%)`,
-      }} />
-
-      {/* Grid lines */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)`,
-        backgroundSize: '60px 60px',
-        maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
-      }} />
-
-      <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 24px', width: '100%' }}>
-
-        {/* SE7EN FIT centered logo */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          style={{ marginBottom: 32 }}
-        >
-          <span style={{
-            fontSize: 'clamp(64px, 14vw, 160px)',
-            fontWeight: 900,
-            fontFamily: "'Space Grotesk', sans-serif",
-            letterSpacing: '-0.04em',
-            lineHeight: 1,
-            color: '#ffffff',
-            display: 'inline-block',
-            userSelect: 'none',
-          }}>
-            SE<span style={{ color: ACCENT }}>7</span>EN{' '}
-            <span style={{ color: ACCENT }}>FIT</span>
-          </span>
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          style={{
-            fontSize: 'clamp(16px, 2.5vw, 30px)', fontWeight: 600, color: '#aaaaaa',
-            fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.01em',
-            maxWidth: 580, margin: '0 auto 16px', lineHeight: 1.3,
-          }}
-        >
-          India's Smart Fitness &{' '}
-          <span style={{ color: '#ffffff' }}>Gym Management</span> Ecosystem
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '100%', maxWidth: 1120 }}>
+        <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} style={{ color: '#fff', fontSize: 'clamp(68px, 15vw, 170px)', lineHeight: 0.95, letterSpacing: '-0.06em', fontWeight: 950, fontFamily: "'Space Grotesk', sans-serif" }}>
+          SE<span style={{ color: ACCENT }}>7</span>EN <span style={{ color: ACCENT }}>FIT</span>
         </motion.h1>
-
-        {/* Subheadline */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55, duration: 0.7 }}
-          style={{
-            fontSize: 'clamp(13px, 1.4vw, 16px)', color: '#555', maxWidth: 520,
-            margin: '0 auto 40px', lineHeight: 1.7,
-            fontFamily: "'Inter', sans-serif",
-          }}
-        >
-          SE7EN FIT connects users, gym owners, workouts, nutrition, referrals, rewards, and AI-powered fitness tools in one premium platform.
+        <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7 }} style={{ marginTop: 40, color: '#d8d8d8', fontSize: 'clamp(24px, 3.2vw, 42px)', lineHeight: 1.2, fontWeight: 850, fontFamily: "'Space Grotesk', sans-serif" }}>
+          India’s Smart Fitness App + Gym Management Ecosystem
+        </motion.h2>
+        <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7 }} style={{ color: '#7a7a7a', fontSize: 17, maxWidth: 750, margin: '22px auto 42px', lineHeight: 1.8, fontFamily: "'Inter', sans-serif" }}>
+          SE7EN FIT brings AI workouts, food scan, nutrition, tracking, challenges, rewards, subscriptions, referrals, and gym-owner management into one premium platform.
         </motion.p>
 
-        {/* CTA Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.6 }}
-          style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}
-        >
-          <a href="#for-users">
-            <motion.button
-              whileHover={{ scale: 1.04, boxShadow: `0 0 30px ${ACCENT}60` }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                padding: '14px 28px', borderRadius: 100,
-                background: ACCENT, color: '#000',
-                fontWeight: 700, fontSize: 15, cursor: 'pointer', border: 'none',
-                fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', gap: 8,
-              }}
-            >
-              Start Your Fitness Journey <ArrowRight size={16} />
-            </motion.button>
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45, duration: 0.65 }} style={{ display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <a href="#app-features" style={{ textDecoration: 'none' }}>
+            <button style={{ padding: '15px 30px', borderRadius: 999, background: ACCENT, color: '#000', border: 'none', fontSize: 15, fontWeight: 850, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+              Explore App Features <ArrowRight size={16} />
+            </button>
           </a>
-          <Link to="/login">
-            <motion.button
-              whileHover={{ scale: 1.04, borderColor: ACCENT, color: ACCENT }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                padding: '14px 28px', borderRadius: 100,
-                background: 'transparent', color: '#ccc',
-                fontWeight: 600, fontSize: 15, cursor: 'pointer',
-                border: '1px solid #333', fontFamily: "'Inter', sans-serif",
-                display: 'flex', alignItems: 'center', gap: 8, transition: 'border-color 0.2s, color 0.2s',
-              }}
-            >
-              <LayoutDashboard size={16} /> Gym Owner Portal
-            </motion.button>
+          <Link to="/login" style={{ textDecoration: 'none' }}>
+            <button style={{ padding: '15px 30px', borderRadius: 999, background: 'transparent', color: '#d8d8d8', border: '1px solid #333', fontSize: 15, fontWeight: 750, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+              <LayoutDashboard size={16} /> Open Gym Management Tool
+            </button>
           </Link>
         </motion.div>
       </div>
-
-      {/* Bottom fade */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: 200,
-        background: 'linear-gradient(to bottom, transparent, #050505)',
-        pointerEvents: 'none',
-      }} />
-    </div>
+    </section>
   );
 }
 
-/* ─── SECTION: FOR USERS ─── */
+function AppFeaturesSection() {
+  const features = [
+    { icon: Brain, title: 'AI Trainer', desc: 'Personalized AI workout guidance for fat loss, muscle gain, stamina, home workouts and gym workouts.' },
+    { icon: Video, title: 'Workout Video Guides', desc: 'Exercise library with form tips, mistakes, target muscles, thumbnails and future CDN video support.' },
+    { icon: ScanLine, title: 'Food Scan', desc: 'Camera-based food scan UI to estimate calories, protein, carbs and fat with safe fallback states.' },
+    { icon: Salad, title: 'Nutrition Planner', desc: 'Indian food-friendly calorie and macro tracking for breakfast, lunch, dinner, snacks and water.' },
+    { icon: Activity, title: 'Progress Tracking', desc: 'Track steps, calories, water, sleep, weight and workout history with clean progress cards.' },
+    { icon: Trophy, title: 'Challenges & Leaderboards', desc: '7-day challenges, gym leaderboards, streaks, badges and rewards to increase engagement.' },
+    { icon: Gift, title: 'Rewards & Referrals', desc: 'SE7EN coins, gym rewards, referral bonuses, coupons and achievement badges.' },
+    { icon: CreditCard, title: 'Subscriptions', desc: 'Free trial, monthly, quarterly and annual subscription-ready UI for premium app features.' },
+  ];
+  return (
+    <section id="app-features" style={{ padding: '110px 24px', background: BG }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+        <SectionHeader eyebrow="App Features" title="Everything your fitness app" highlight="offers in one place" desc="This is the main SE7EN FIT website. Users can understand the mobile app, premium AI features, tracking tools, workouts, diet, rewards and gym connection before downloading or joining." />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+          {features.map((feature) => <FeatureCard key={feature.title} {...feature} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ForUsersSection() {
   const features = [
-    { icon: Brain, title: 'AI Trainer', desc: 'Personalized workout recommendations powered by AI based on your goals and body type.' },
-    { icon: ScanLine, title: 'Food Scan', desc: 'Scan any food item and instantly get calories, macros, and nutrition insights.' },
-    { icon: Dumbbell, title: 'Workout Guides', desc: 'Hundreds of guided workout plans for fat loss, muscle gain, strength and endurance.' },
-    { icon: BarChart3, title: 'Progress Tracking', desc: 'Visual progress charts, body stats, and weekly reports to keep you motivated.' },
-    { icon: Trophy, title: 'Challenges', desc: 'Join gym challenges, compete with members, and win rewards and recognition.' },
-    { icon: Star, title: 'Rewards', desc: 'Earn SE7EN Coins for workouts, referrals, and streaks. Redeem for gym perks.' },
-    { icon: Users, title: 'My Gym', desc: 'Connect with your gym, view schedules, book classes, and message your trainer.' },
-    { icon: CreditCard, title: 'Subscriptions', desc: 'Manage your gym membership, payment history, and renewal — all in one place.' },
+    { icon: Smartphone, title: 'User Mobile App', desc: 'Dark neon mobile app dashboard with Today’s Fitness, AI Daily Tip, workouts, nutrition and tracking.' },
+    { icon: Dumbbell, title: 'Workout Plans', desc: 'Guided workout plans for beginners, fat loss, strength, muscle gain and gym routines.' },
+    { icon: Heart, title: 'Health Tracking', desc: 'Manual tracking now, Google Health Connect and Apple Health-ready architecture later.' },
+    { icon: Star, title: 'Premium Experience', desc: 'Clean Gen-Z UI, subscription cards, progress insights and premium AI trainer unlocks.' },
   ];
-
   return (
-    <section id="for-users" style={{ padding: '100px 24px', background: '#050505' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          style={{ textAlign: 'center', marginBottom: 64 }}
-        >
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 100, border: `1px solid ${ACCENT}40`, background: `${ACCENT}10`, marginBottom: 20 }}>
-            <span style={{ fontSize: 12, color: ACCENT, fontWeight: 600, letterSpacing: '0.08em', fontFamily: "'Inter', sans-serif" }}>FOR MEMBERS & USERS</span>
-          </div>
-          <h2 style={{ fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 800, color: '#fff', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16 }}>
-            Your complete<br /><span style={{ color: ACCENT }}>fitness companion</span>
-          </h2>
-          <p style={{ color: '#777', fontSize: 16, maxWidth: 480, margin: '0 auto', fontFamily: "'Inter', sans-serif", lineHeight: 1.7 }}>
-            Everything you need to train smarter, eat better, and achieve your fitness goals.
-          </p>
-        </motion.div>
-
+    <section id="for-users" style={{ padding: '110px 24px', background: '#030303' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+        <SectionHeader eyebrow="For Users" title="Train smarter with" highlight="AI fitness tools" desc="SE7EN FIT helps members follow workouts, scan meals, track progress, join challenges, earn rewards and connect with their gym." />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-          {features.map((f, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.07, duration: 0.5 }}
-              whileHover={{ y: -4, borderColor: ACCENT + '40', boxShadow: `0 20px 40px rgba(0,0,0,0.4), 0 0 20px ${ACCENT}10` }}
-              style={{
-                padding: 24, borderRadius: 16, background: '#0d0d0d',
-                border: '1px solid #1e1e1e', cursor: 'default',
-                transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
-              }}
-            >
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: ACCENT_DIM, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, border: `1px solid ${ACCENT}30` }}>
-                <f.icon size={18} style={{ color: ACCENT }} />
-              </div>
-              <h3 style={{ fontWeight: 700, color: '#fff', marginBottom: 8, fontFamily: "'Space Grotesk', sans-serif", fontSize: 16 }}>{f.title}</h3>
-              <p style={{ color: '#666', fontSize: 13, lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>{f.desc}</p>
-            </motion.div>
-          ))}
+          {features.map((feature) => <FeatureCard key={feature.title} {...feature} />)}
         </div>
       </div>
     </section>
   );
 }
 
-/* ─── SECTION: FOR GYM OWNERS ─── */
 function ForOwnersSection() {
   const features = [
-    { icon: Users, title: 'Member Management', desc: 'Full CRM — add, track, filter, and manage every gym member from one dashboard.' },
-    { icon: Dumbbell, title: 'Workout Assignment', desc: 'Build custom workout plans and assign them to members in seconds.' },
-    { icon: Heart, title: 'Diet Assignment', desc: 'Create nutrition plans with macros and assign to individual members or groups.' },
-    { icon: ClipboardCheck, title: 'Attendance', desc: 'Mark daily attendance manually or via QR. Track trends and absent members.' },
-    { icon: CreditCard, title: 'Payments & Plans', desc: 'Track dues, record payments, manage membership plans, and view revenue.' },
-    { icon: Zap, title: 'SE7EN FIT Referrals', desc: 'Track users referred to your gym by SE7EN FIT. Manage conversion pipeline.' },
-    { icon: MessageSquare, title: 'WhatsApp & Email', desc: 'Send bulk or individual messages. Automated reminders for dues and renewals.' },
-    { icon: Megaphone, title: 'Offers & Campaigns', desc: 'Create announcements and promotional offers targeted to specific audiences.' },
-    { icon: BarChart3, title: 'Reports & Analytics', desc: 'Revenue, attendance, member growth, and campaign performance reports.' },
+    { icon: LayoutDashboard, title: 'Owner Dashboard', desc: 'Monthly revenue, total members, new leads, today check-ins, pending payments and live business stats.' },
+    { icon: Users, title: 'Member Management', desc: 'Add, search, update and track active, expired and pending members from one dashboard.' },
+    { icon: ClipboardCheck, title: 'Attendance', desc: 'Daily check-ins, manual attendance, member attendance history and attendance trends.' },
+    { icon: CreditCard, title: 'Payments & Plans', desc: 'Track dues, paid payments, revenue, membership plans and renewal status.' },
+    { icon: Megaphone, title: 'Campaigns & Announcements', desc: 'Create gym offers, promotional campaigns and member announcements.' },
+    { icon: MessageSquare, title: 'WhatsApp & Email', desc: 'Communication-ready architecture for reminders, campaign messages and updates.' },
+    { icon: Shield, title: 'Gym Profile & Staff', desc: 'Manage public gym profile, staff, classes, equipment, reviews and referrals.' },
+    { icon: BarChart3, title: 'Reports', desc: 'Revenue reports, attendance reports, member growth, conversion and gym performance analytics.' },
   ];
-
   return (
-    <section id="gym-owners" style={{ padding: '100px 24px', background: '#030303' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          style={{ textAlign: 'center', marginBottom: 64 }}
-        >
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 100, border: `1px solid ${ACCENT}40`, background: `${ACCENT}10`, marginBottom: 20 }}>
-            <span style={{ fontSize: 12, color: ACCENT, fontWeight: 600, letterSpacing: '0.08em', fontFamily: "'Inter', sans-serif" }}>FOR GYM OWNERS</span>
-          </div>
-          <h2 style={{ fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 800, color: '#fff', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16 }}>
-            Run your gym<br /><span style={{ color: ACCENT }}>like a pro</span>
-          </h2>
-          <p style={{ color: '#777', fontSize: 16, maxWidth: 480, margin: '0 auto', fontFamily: "'Inter', sans-serif", lineHeight: 1.7 }}>
-            The complete gym management command center. Built for serious gym owners.
-          </p>
-        </motion.div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-          {features.map((f, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.06, duration: 0.5 }}
-              whileHover={{ borderColor: ACCENT + '50', boxShadow: `0 0 24px ${ACCENT}08` }}
-              style={{
-                padding: '20px 24px', borderRadius: 14, background: '#0a0a0a',
-                border: '1px solid #1a1a1a', display: 'flex', gap: 16, alignItems: 'flex-start',
-                transition: 'border-color 0.2s, box-shadow 0.2s',
-              }}
-            >
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: ACCENT_DIM, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${ACCENT}25` }}>
-                <f.icon size={16} style={{ color: ACCENT }} />
-              </div>
-              <div>
-                <h3 style={{ fontWeight: 700, color: '#fff', marginBottom: 4, fontFamily: "'Space Grotesk', sans-serif", fontSize: 15 }}>{f.title}</h3>
-                <p style={{ color: '#5a5a5a', fontSize: 13, lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>{f.desc}</p>
-              </div>
-            </motion.div>
-          ))}
+    <section id="gym-owners" style={{ padding: '110px 24px', background: BG }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+        <SectionHeader eyebrow="For Gym Owners" title="Run your gym" highlight="like a pro" desc="The gym management tool gives owners one command center for members, attendance, payments, leads, equipment, communication, campaigns and reports." />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+          {features.map((feature) => <FeatureCard key={feature.title} {...feature} />)}
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-          style={{ textAlign: 'center', marginTop: 48 }}
-        >
-          <Link to="/login">
-            <motion.button
-              whileHover={{ scale: 1.04, boxShadow: `0 0 30px ${ACCENT}60` }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                padding: '14px 32px', borderRadius: 100,
-                background: ACCENT, color: '#000',
-                fontWeight: 700, fontSize: 15, cursor: 'pointer', border: 'none',
-                fontFamily: "'Inter', sans-serif", display: 'inline-flex', alignItems: 'center', gap: 8,
-              }}
-            >
-              Open Gym Owner Portal <ChevronRight size={16} />
-            </motion.button>
+        <div style={{ textAlign: 'center', marginTop: 48 }}>
+          <Link to="/login" style={{ textDecoration: 'none' }}>
+            <button style={{ padding: '15px 32px', borderRadius: 999, background: ACCENT, color: '#000', border: 'none', fontWeight: 850, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+              Access Gym Management Tool <ArrowRight size={16} />
+            </button>
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
 }
 
-/* ─── SECTION: PRICING ─── */
+function AIToolsSection() {
+  const tools = [
+    'AI workout generator', 'AI trainer chat', 'Food scan nutrition estimate', 'Daily AI fitness tip', 'Meal recommendations', 'Progress insights', 'Challenge generator', 'Smart gym recommendations'
+  ];
+  return (
+    <section id="ai-tools" style={{ padding: '110px 24px', background: '#030303' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+        <SectionHeader eyebrow="AI Tools" title="AI-powered fitness" highlight="built for India" desc="SE7EN FIT is designed around practical AI tools that help users train, eat, track and stay consistent while helping gym owners improve retention." />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14 }}>
+          {tools.map((tool) => (
+            <div key={tool} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '17px 18px', background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14 }}>
+              <CheckCircle size={18} color={ACCENT} />
+              <span style={{ color: '#d7d7d7', fontWeight: 700, fontSize: 14 }}>{tool}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function PricingSection() {
   const plans = [
-    { name: 'Trial', price: 'Free', duration: '7 days', features: ['AI Workout Suggestion', 'Basic Attendance', 'Up to 10 members', 'Email Support'], popular: false },
-    { name: 'Basic', price: '₹299', duration: '/month', features: ['Up to 100 members', 'Workout Plans', 'Diet Plans', 'Payment Tracking', 'WhatsApp Alerts'], popular: false },
-    { name: 'Premium', price: '₹499', duration: '/month', features: ['Unlimited Members', 'AI Trainer Tools', 'SE7EN Referral Module', 'Campaigns & Offers', 'Full Reports', 'Priority Support'], popular: true },
-    { name: 'Quarterly', price: '₹2,999', duration: '/quarter', features: ['Everything in Premium', '3-month savings', 'Dedicated Onboarding', 'Custom Branding'], popular: false },
-    { name: 'Annual', price: '₹5,999', duration: '/year', features: ['Everything in Premium', 'Best value — 50% off', 'API Access', 'Dedicated Account Manager', 'White-label option'], popular: false },
+    { name: 'Free Trial', price: '7 days', features: ['Limited access', 'Basic workout tools', 'Basic tracking'] },
+    { name: 'Basic', price: '₹299/mo', features: ['Workout plans', 'Nutrition tracking', 'Progress cards'] },
+    { name: 'Premium', price: '₹499/mo', features: ['All AI features', 'Food scan', 'Challenges', 'Rewards'], popular: true },
+    { name: 'Annual', price: '₹5,999/yr', features: ['Best value', 'Full premium access', 'Priority support'] },
   ];
-
   return (
-    <section id="pricing" style={{ padding: '100px 24px', background: '#050505' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          style={{ textAlign: 'center', marginBottom: 64 }}
-        >
-          <h2 style={{ fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 800, color: '#fff', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16 }}>
-            Simple, <span style={{ color: ACCENT }}>transparent</span> pricing
-          </h2>
-          <p style={{ color: '#777', fontSize: 16, fontFamily: "'Inter', sans-serif" }}>Start free. Scale as you grow.</p>
-        </motion.div>
-
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {plans.map((p, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              whileHover={{ y: -6 }}
-              style={{
-                flex: '1 1 190px', maxWidth: 220,
-                padding: 24, borderRadius: 20,
-                background: p.popular ? `linear-gradient(135deg, ${ACCENT}15, ${ACCENT}05)` : '#0d0d0d',
-                border: p.popular ? `1px solid ${ACCENT}60` : '1px solid #1e1e1e',
-                position: 'relative',
-                boxShadow: p.popular ? `0 0 40px ${ACCENT}15` : 'none',
-                transition: 'transform 0.2s',
-              }}
-            >
-              {p.popular && (
-                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: ACCENT, color: '#000', fontSize: 10, fontWeight: 800, padding: '3px 12px', borderRadius: 100, letterSpacing: '0.08em', fontFamily: "'Inter', sans-serif" }}>
-                  MOST POPULAR
-                </div>
-              )}
-              <p style={{ fontSize: 13, color: '#888', fontFamily: "'Inter', sans-serif", marginBottom: 8, fontWeight: 500 }}>{p.name}</p>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-                <span style={{ fontSize: 32, fontWeight: 800, color: p.popular ? ACCENT : '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{p.price}</span>
-                <span style={{ fontSize: 13, color: '#555', fontFamily: "'Inter', sans-serif" }}>{p.duration}</span>
-              </div>
-              <div style={{ height: 1, background: '#1e1e1e', margin: '16px 0' }} />
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {p.features.map((f, j) => (
-                  <li key={j} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                    <CheckCircle size={13} style={{ color: ACCENT, marginTop: 2, flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: '#777', fontFamily: "'Inter', sans-serif", lineHeight: 1.5 }}>{f}</span>
-                  </li>
+    <section id="pricing" style={{ padding: '110px 24px', background: BG }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+        <SectionHeader eyebrow="Pricing" title="Simple pricing" highlight="for users and gyms" desc="Show your product pricing clearly: user subscriptions for premium AI features and owner plans for the gym management portal." />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+          {plans.map((plan) => (
+            <div key={plan.name} style={{ padding: 24, borderRadius: 20, background: plan.popular ? `linear-gradient(135deg, ${ACCENT}18, ${ACCENT}06)` : CARD, border: plan.popular ? `1px solid ${ACCENT}66` : `1px solid ${BORDER}` }}>
+              {plan.popular && <Pill>Most Popular</Pill>}
+              <h3 style={{ color: '#fff', fontSize: 20, fontWeight: 850, marginTop: plan.popular ? 18 : 0 }}>{plan.name}</h3>
+              <p style={{ color: ACCENT, fontSize: 30, fontWeight: 900, margin: '10px 0 18px' }}>{plan.price}</p>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {plan.features.map((feature) => (
+                  <div key={feature} style={{ display: 'flex', gap: 10, alignItems: 'center', color: '#777', fontSize: 13 }}>
+                    <CheckCircle size={14} color={ACCENT} /> {feature}
+                  </div>
                 ))}
-              </ul>
-              <Link to="/login">
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  style={{
-                    width: '100%', marginTop: 20, padding: '10px', borderRadius: 100,
-                    background: p.popular ? ACCENT : 'transparent',
-                    color: p.popular ? '#000' : '#888',
-                    fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                    border: p.popular ? 'none' : '1px solid #2a2a2a',
-                    fontFamily: "'Inter', sans-serif",
-                    transition: 'background 0.2s',
-                  }}
-                >
-                  Get Started
-                </motion.button>
-              </Link>
-            </motion.div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -659,81 +301,41 @@ function PricingSection() {
   );
 }
 
-/* ─── FOOTER ─── */
 function Footer() {
   return (
-    <footer style={{ padding: '60px 24px 40px', background: '#030303', borderTop: '1px solid #111' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 32, marginBottom: 48 }}>
-          <div>
-            <p style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 22, color: ACCENT, letterSpacing: '-0.01em', marginBottom: 8 }}>SE7EN FIT</p>
-            <p style={{ color: '#555', fontSize: 13, maxWidth: 260, lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>India's premium fitness & gym management ecosystem. Built for the future of fitness.</p>
-          </div>
-          <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap' }}>
-            {[
-              { title: 'Product', links: ['For Users', 'Gym Owners', 'Pricing', 'Features'] },
-              { title: 'Company', links: ['About', 'Blog', 'Careers', 'Press'] },
-              { title: 'Legal', links: ['Privacy Policy', 'Terms of Service', 'Cookie Policy'] },
-              { title: 'Support', links: ['Help Center', 'Contact', 'Status'] },
-            ].map(col => (
-              <div key={col.title}>
-                <p style={{ fontWeight: 700, color: '#ccc', fontSize: 13, marginBottom: 12, fontFamily: "'Space Grotesk', sans-serif" }}>{col.title}</p>
-                {col.links.map(l => (
-                  <p key={l} style={{ color: '#555', fontSize: 12, marginBottom: 8, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'color 0.2s' }}
-                    onMouseEnter={e => e.target.style.color = '#aaa'}
-                    onMouseLeave={e => e.target.style.color = '#555'}
-                  >{l}</p>
-                ))}
-              </div>
-            ))}
-          </div>
+    <footer style={{ padding: '64px 24px 42px', background: '#030303', borderTop: '1px solid #111' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto', display: 'flex', justifyContent: 'space-between', gap: 28, flexWrap: 'wrap' }}>
+        <div>
+          <h3 style={{ color: ACCENT, fontSize: 24, fontWeight: 900 }}>SE7EN FIT</h3>
+          <p style={{ color: '#666', maxWidth: 420, lineHeight: 1.7, marginTop: 10 }}>India’s smart fitness and gym management ecosystem for users, gym owners, workouts, nutrition, AI tools, rewards and subscriptions.</p>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, paddingTop: 24, borderTop: '1px solid #111' }}>
-          <p style={{ color: '#333', fontSize: 12, fontFamily: "'Inter', sans-serif" }}>© 2026 SE7EN FIT. All rights reserved.</p>
-          <p style={{ color: '#333', fontSize: 12, fontFamily: "'Inter', sans-serif" }}>Built for serious gym owners & fitness enthusiasts.</p>
-        </div>
+        <Link to="/login" style={{ textDecoration: 'none' }}>
+          <button style={{ padding: '13px 24px', borderRadius: 999, background: ACCENT, color: '#000', border: 'none', fontWeight: 850, cursor: 'pointer' }}>Open Gym Management Tool</button>
+        </Link>
       </div>
     </footer>
   );
 }
 
-/* ─── MAIN EXPORT ─── */
 export default function LandingPage() {
-  const alreadySeen = !!sessionStorage.getItem('se7en-intro-shown');
-  const [showIntro, setShowIntro] = useState(!alreadySeen);
-  // If already seen, main is immediately visible; otherwise hidden until intro calls onDone
-  const [mainVisible, setMainVisible] = useState(alreadySeen);
-
-  const handleIntroDone = () => {
-    sessionStorage.setItem('se7en-intro-shown', '1');
-    setShowIntro(false);
-    setMainVisible(true);
-  };
-
   return (
     <>
       <style>{`
-        @keyframes dumbbellSpin {
-          0% { transform: rotateY(0deg) rotateX(10deg); }
-          100% { transform: rotateY(360deg) rotateX(10deg); }
-        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
+        body { background: ${BG}; }
+        @media (max-width: 820px) {
+          .landing-nav-links { display: none !important; }
+        }
       `}</style>
-
-      <Grain />
-
-      {showIntro && <IntroScreen onDone={handleIntroDone} />}
-
-      <div style={{
-        background: '#050505', minHeight: '100vh', overflowX: 'hidden',
-        opacity: mainVisible ? 1 : 0,
-        transition: 'opacity 0.8s ease',
-      }}>
+      <div style={{ background: BG, minHeight: '100vh', overflowX: 'hidden', color: '#fff' }}>
+        <Grain />
         <Navbar />
         <HeroSection />
         <ForUsersSection />
         <ForOwnersSection />
+        <AppFeaturesSection />
+        <AIToolsSection />
         <PricingSection />
         <Footer />
       </div>
