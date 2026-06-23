@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,23 @@ import { useAuth } from '@/lib/AuthContext';
 const STEPS = ['Owner Info', 'Gym Details', 'Operations', 'Partnership'];
 const NEON_GREEN = '#20c55d';
 const NEON_GREEN_SOFT = 'rgba(32,197,93,0.16)';
+
+const FormField = memo(function FormField({ label, value, onChange, type = 'text', placeholder, required }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm text-muted-foreground tracking-normal">
+        {label}{required && <span className="text-red-400 ml-1">*</span>}
+      </Label>
+      <Input
+        type={type}
+        placeholder={placeholder}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="bg-secondary border-border text-foreground focus-visible:ring-primary tracking-normal"
+      />
+    </div>
+  );
+});
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
@@ -89,19 +106,6 @@ export default function Onboarding() {
     }
   };
 
-  const Field = ({ label, name, type = 'text', placeholder, required }) => (
-    <div className="space-y-1.5">
-      <Label className="text-sm text-muted-foreground tracking-normal">{label}{required && <span className="text-red-400 ml-1">*</span>}</Label>
-      <Input
-        type={type}
-        placeholder={placeholder}
-        value={form[name]}
-        onChange={(e) => update(name, e.target.value)}
-        className="bg-secondary border-border text-foreground focus-visible:ring-primary tracking-normal"
-      />
-    </div>
-  );
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#050505' }}>
       <div className="w-full max-w-lg">
@@ -138,17 +142,17 @@ export default function Onboarding() {
           <div className="space-y-4">
             {step === 0 && (
               <>
-                <Field label="Owner Name" name="owner_name" placeholder="Your full name" required />
-                <Field label="Email" name="email" type="email" placeholder="owner@gym.com" required />
-                <Field label="Phone Number" name="phone" placeholder="+91 9876543210" required />
+                <FormField label="Owner Name" value={form.owner_name} onChange={(value) => update('owner_name', value)} placeholder="Your full name" required />
+                <FormField label="Email" value={form.email} onChange={(value) => update('email', value)} type="email" placeholder="owner@gym.com" required />
+                <FormField label="Phone Number" value={form.phone} onChange={(value) => update('phone', value)} placeholder="+91 9876543210" required />
               </>
             )}
             {step === 1 && (
               <>
-                <Field label="Gym Name" name="gym_name" placeholder="Your gym name" required />
-                <Field label="Address" name="address" placeholder="Full gym address" required />
-                <Field label="City" name="city" placeholder="City" required />
-                <Field label="GST Number" name="gst_number" placeholder="Optional - not saved yet" />
+                <FormField label="Gym Name" value={form.gym_name} onChange={(value) => update('gym_name', value)} placeholder="Your gym name" required />
+                <FormField label="Address" value={form.address} onChange={(value) => update('address', value)} placeholder="Full gym address" required />
+                <FormField label="City" value={form.city} onChange={(value) => update('city', value)} placeholder="City" required />
+                <FormField label="GST Number" value={form.gst_number} onChange={(value) => update('gst_number', value)} placeholder="Optional - not saved yet" />
                 <div className="space-y-1.5">
                   <Label className="text-sm text-muted-foreground tracking-normal">Description</Label>
                   <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Tell members about your gym" className="bg-secondary border-border text-foreground focus-visible:ring-primary tracking-normal" />
@@ -157,11 +161,11 @@ export default function Onboarding() {
             )}
             {step === 2 && (
               <>
-                <Field label="Opening Hours" name="opening_hours" placeholder="e.g. 5 AM - 11 PM" />
-                <Field label="Gym Capacity" name="gym_capacity" type="number" placeholder="Max members" />
-                <Field label="Trainer Count" name="trainer_count" type="number" placeholder="Number of trainers" />
-                <Field label="Staff Count" name="staff_count" type="number" placeholder="Number of staff" />
-                <Field label="Bank/Payout Details" name="bank_details" placeholder="Account details (optional)" />
+                <FormField label="Opening Hours" value={form.opening_hours} onChange={(value) => update('opening_hours', value)} placeholder="e.g. 5 AM - 11 PM" />
+                <FormField label="Gym Capacity" value={form.gym_capacity} onChange={(value) => update('gym_capacity', value)} type="number" placeholder="Max members" />
+                <FormField label="Trainer Count" value={form.trainer_count} onChange={(value) => update('trainer_count', value)} type="number" placeholder="Number of trainers" />
+                <FormField label="Staff Count" value={form.staff_count} onChange={(value) => update('staff_count', value)} type="number" placeholder="Number of staff" />
+                <FormField label="Bank/Payout Details" value={form.bank_details} onChange={(value) => update('bank_details', value)} placeholder="Account details (optional)" />
               </>
             )}
             {step === 3 && (
