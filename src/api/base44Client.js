@@ -23,6 +23,7 @@ const endpointMap = {
   Notification: ['/api/notifications'],
 };
 
+const singletonEntities = new Set(['GymProfile']);
 const pathsFor = (entityName) => endpointMap[entityName] || [`/api/gym-owner/${entityName}`];
 
 function persistAuth(result) {
@@ -33,27 +34,44 @@ function persistAuth(result) {
   return result;
 }
 
-const createEntityAdapter = (entityName) => ({
-  async list() {
-    return safeList(pathsFor(entityName));
-  },
-  async filter(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return safeList(pathsFor(entityName).map((path) => `${path}${query ? `?${query}` : ''}`));
-  },
-  async get(id) {
-    return safeOne(pathsFor(entityName).map((path) => `${path}/${id}`));
-  },
-  async create(payload) {
-    return apiRequest(pathsFor(entityName)[0], { method: 'POST', body: payload });
-  },
-  async update(id, payload) {
-    return apiRequest(`${pathsFor(entityName)[0]}/${id}`, { method: 'PUT', body: payload });
-  },
-  async delete(id) {
-    return apiRequest(`${pathsFor(entityName)[0]}/${id}`, { method: 'DELETE' });
-  },
-});
+function asList(result) {
+  if (!result) return [];
+  return Array.isArray(result) ? result : [result];
+}
+
+const createEntityAdapter = (entityName) => {
+  const paths = pathsFor(entityName);
+  const isSingleton = singletonEntities.has(entityName);
+
+  return {
+    async list() {
+      if (isSingleton) {
+        return asList(await safeOne(paths));
+      }
+      return safeList(paths);
+    },
+    async filter(params = {}) {
+      const query = new URLSearchParams(params).toString();
+      if (isSingleton) return asList(await safeOne(paths.map((path) => `${path}${query ? `?${query}` : ''}`)));
+      return safeList(paths.map((path) => `${path}${query ? `?${query}` : ''}`));
+    },
+    async get(id) {
+      if (isSingleton) return safeOne(paths);
+      return safeOne(paths.map((path) => `${path}/${id}`));
+    },
+    async create(payload) {
+      return apiRequest(paths[0], { method: 'POST', body: payload });
+    },
+    async update(id, payload) {
+      if (isSingleton) return apiRequest(paths[0], { method: 'PUT', body: payload });
+      return apiRequest(`${paths[0]}/${id}`, { method: 'PUT', body: payload });
+    },
+    async delete(id) {
+      if (isSingleton) throw new Error('Gym profile cannot be deleted from this website.');
+      return apiRequest(`${paths[0]}/${id}`, { method: 'DELETE' });
+    },
+  };
+};
 
 const entities = new Proxy({}, {
   get(target, entityName) {
@@ -113,10 +131,11 @@ export const base44 = {
         throw error;
       }
     },
-    async logout() {
+    async logout(redirectTo) {
       await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => null);
       tokenStore.clear();
       userStore.clear();
+      if (redirectTo) window.location.href = redirectTo;
     },
     setToken(token) {
       tokenStore.set(token);
