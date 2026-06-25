@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { apiRequest } from '@/lib/api-client';
 import { Mail, Send, AlertTriangle, Check, Clock, Eye } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import StatCard from '@/components/ui/StatCard';
@@ -27,18 +28,33 @@ const EMAIL_TEMPLATES = [
 ];
 
 const emptyForm = { recipient_name: '', recipient_email: '', subject: '', body: '', template_name: '' };
+const emptyProviderStatus = { configured: false, missing: [], from: null, host: null };
 
 export default function EmailNotifications() {
   const [emails, setEmails] = useState([]);
+  const [providerStatus, setProviderStatus] = useState(emptyProviderStatus);
   const [loading, setLoading] = useState(true);
   const [showSend, setShowSend] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const { toast } = useToast();
 
+  const providerConfigured = Boolean(providerStatus?.configured);
+
   useEffect(() => { load(); }, []);
 
   const load = async () => {
-    try { setEmails(await base44.entities.EmailMessage.list()); } catch (e) { console.error(e); }
+    setLoading(true);
+    try {
+      const [emailList, status] = await Promise.all([
+        base44.entities.EmailMessage.list(),
+        apiRequest('/api/gym-owner/email-notifications/status').catch(() => emptyProviderStatus),
+      ]);
+      setEmails(Array.isArray(emailList) ? emailList : []);
+      setProviderStatus(status || emptyProviderStatus);
+    } catch (e) {
+      console.error(e);
+      setEmails([]);
+    }
     setLoading(false);
   };
 
@@ -48,12 +64,23 @@ export default function EmailNotifications() {
       return;
     }
     try {
-      await base44.entities.EmailMessage.create({ to: form.recipient_email.trim(), subject: form.subject, message: form.body, status: 'queued' });
-      toast({ title: 'Email queued', description: 'Email provider is not connected yet. Email is saved in queue.' });
+      const result = await base44.entities.EmailMessage.create({
+        to: form.recipient_email.trim(),
+        recipient_email: form.recipient_email.trim(),
+        recipient_name: form.recipient_name.trim() || undefined,
+        subject: form.subject.trim(),
+        message: form.body.trim(),
+        template_name: form.template_name || undefined,
+      });
+      toast(result?.status === 'sent'
+        ? { title: 'Email sent', description: 'Message was sent successfully.' }
+        : { title: 'Email queued', description: 'Provider is not connected yet, so the email was saved in history.' });
       setShowSend(false);
       setForm(emptyForm);
       load();
-    } catch (e) { toast({ title: 'Error', description: e.message, variant: 'destructive' }); }
+    } catch (e) {
+      toast({ title: 'Email failed', description: e.message, variant: 'destructive' });
+    }
   };
 
   const selectTemplate = (t) => setForm(f => ({ ...f, template_name: t.name, subject: t.subject, body: t.body }));
@@ -75,11 +102,15 @@ export default function EmailNotifications() {
       <PageHeader title="Email Notifications" description="Send and track email communications" actionLabel="Send Email" actionIcon={Send} onAction={() => setShowSend(true)} />
 
       <div className="glass-card rounded-xl p-4 flex items-start gap-3" style={{ borderColor: NEON_BORDER }}>
-        <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} />
+        {providerConfigured ? <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} /> : <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} />}
         <div>
-          <p className="text-sm font-semibold" style={{ color: NEON_GREEN }}>Email Provider Setup Pending</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Connect SMTP, SendGrid, Resend, or Mailgun to enable actual email delivery. Emails are currently queued safely.</p>
-          <Button size="sm" variant="outline" className="mt-2 text-xs" style={{ borderColor: NEON_BORDER, color: NEON_GREEN }}>Configure SMTP →</Button>
+          <p className="text-sm font-semibold" style={{ color: NEON_GREEN }}>{providerConfigured ? 'Email Provider Connected' : 'Email Provider Setup Pending'}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {providerConfigured
+              ? `Provider is active${providerStatus.from ? ` from ${providerStatus.from}` : ''}. Emails will be sent from the backend.`
+              : `Add the SMTP environment variables in your backend. Missing: ${(providerStatus.missing || []).join(', ') || 'provider settings'}.`}
+          </p>
+          {!providerConfigured && <Button size="sm" variant="outline" className="mt-2 text-xs" style={{ borderColor: NEON_BORDER, color: NEON_GREEN }} disabled>Configure SMTP in backend →</Button>}
         </div>
       </div>
 
@@ -119,7 +150,7 @@ export default function EmailNotifications() {
           <DialogHeader><DialogTitle className="font-display">Send Email</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="p-3 rounded-lg text-xs text-muted-foreground" style={{ background: NEON_SOFT, border: `1px solid ${NEON_BORDER}` }}>
-              Email provider not connected. This email will be queued for delivery after provider setup.
+              {providerConfigured ? 'Email provider is connected. This email will be sent now.' : 'Email provider is not connected. This email will be queued until setup is completed.'}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-sm text-muted-foreground">Recipient Name</Label><Input value={form.recipient_name} onChange={e => setForm({...form, recipient_name: e.target.value})} className="bg-secondary border-border" /></div>
@@ -137,7 +168,7 @@ export default function EmailNotifications() {
             </div>
             <div><Label className="text-sm text-muted-foreground">Subject *</Label><Input value={form.subject} onChange={e => setForm({...form, subject: e.target.value})} className="bg-secondary border-border" /></div>
             <div><Label className="text-sm text-muted-foreground">Body *</Label><Textarea value={form.body} onChange={e => setForm({...form, body: e.target.value})} className="bg-secondary border-border" rows={6} /></div>
-            <Button onClick={handleSend} className="w-full font-semibold" style={{ background: NEON_GREEN, color: '#000' }}><Send className="w-4 h-4 mr-2" /> Queue Email</Button>
+            <Button onClick={handleSend} className="w-full font-semibold" style={{ background: NEON_GREEN, color: '#000' }}><Send className="w-4 h-4 mr-2" /> {providerConfigured ? 'Send Email' : 'Queue Email'}</Button>
           </div>
         </DialogContent>
       </Dialog>
