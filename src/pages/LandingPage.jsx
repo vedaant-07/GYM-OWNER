@@ -291,9 +291,47 @@ function HeroSection() {
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)', backgroundSize: '60px 60px', maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)' }} />
 
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', width: '100%', maxWidth: 1120 }}>
-        <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} style={{ color: '#fff', fontSize: 'clamp(68px, 15vw, 170px)', lineHeight: 0.95, letterSpacing: '-0.06em', fontWeight: 950, fontFamily: "'Space Grotesk', sans-serif" }}>
-          SE<span style={{ color: ACCENT }}>7</span>EN <span style={{ color: ACCENT }}>FIT</span>
-        </motion.h1>
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <motion.div
+            className="hero-floating-dumbbell"
+            initial={{ opacity: 0, scale: 0.76, x: -8, rotate: -20 }}
+            animate={{
+              opacity: 1,
+              y: [0, -14, 0],
+              x: [0, 7, 0],
+              rotate: [-18, -8, -18],
+            }}
+            transition={{
+              opacity: { duration: 0.6, delay: 0.35 },
+              scale: { duration: 0.6, delay: 0.35 },
+              y: { duration: 3.2, repeat: Infinity, ease: 'easeInOut' },
+              x: { duration: 4.2, repeat: Infinity, ease: 'easeInOut' },
+              rotate: { duration: 3.2, repeat: Infinity, ease: 'easeInOut' },
+            }}
+            style={{
+              position: 'absolute',
+              top: '-6%',
+              right: '-8%',
+              zIndex: 3,
+              width: 'clamp(46px, 6vw, 88px)',
+              height: 'clamp(46px, 6vw, 88px)',
+              borderRadius: 999,
+              display: 'grid',
+              placeItems: 'center',
+              pointerEvents: 'none',
+              background: 'rgba(32,197,93,0.10)',
+              border: '1px solid rgba(32,197,93,0.30)',
+              boxShadow: '0 0 30px rgba(32,197,93,0.20), inset 0 0 20px rgba(32,197,93,0.06)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <Dumbbell size={38} color={ACCENT} strokeWidth={2.4} />
+          </motion.div>
+
+          <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} style={{ color: '#fff', fontSize: 'clamp(68px, 15vw, 170px)', lineHeight: 0.95, letterSpacing: '-0.06em', fontWeight: 950, fontFamily: "'Space Grotesk', sans-serif" }}>
+            SE<span style={{ color: ACCENT }}>7</span>EN <span style={{ color: ACCENT }}>FIT</span>
+          </motion.h1>
+        </div>
         <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.7 }} style={{ marginTop: 40, color: '#d8d8d8', fontSize: 'clamp(24px, 3.2vw, 42px)', lineHeight: 1.2, fontWeight: 850, fontFamily: "'Space Grotesk', sans-serif" }}>
           India’s Smart Fitness App + Gym Management Ecosystem
         </motion.h2>
