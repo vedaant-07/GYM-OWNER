@@ -31,6 +31,12 @@ const TEMPLATES = [
 
 const emptyForm = { recipient_name: '', recipient_phone: '', message_body: '', message_type: 'individual', template_name: '' };
 
+const getComposerUrl = (phone, message) => {
+  const phone10 = normalizePhone10(phone);
+  const encodedMessage = encodeURIComponent(message.trim());
+  return `https://api.whatsapp.com/send?phone=91${phone10}&text=${encodedMessage}`;
+};
+
 export default function WhatsAppNotifications() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,26 +52,44 @@ export default function WhatsAppNotifications() {
   };
 
   const handleSend = async () => {
-    if (!normalizePhone10(form.recipient_phone) || !form.message_body.trim()) {
-      toast({ title: 'Missing details', description: 'Phone number and message are required.', variant: 'destructive' });
+    const phone10 = normalizePhone10(form.recipient_phone);
+    const message = form.message_body.trim();
+
+    if (phone10.length !== 10 || !message) {
+      toast({ title: 'Missing details', description: 'Enter a valid 10-digit phone number and message.', variant: 'destructive' });
       return;
     }
+
+    const composerUrl = getComposerUrl(phone10, message);
+    const composerWindow = window.open(composerUrl, '_blank', 'noopener,noreferrer');
+
+    if (!composerWindow) {
+      toast({ title: 'Popup blocked', description: 'Allow popups for this site, then try again.', variant: 'destructive' });
+      return;
+    }
+
     try {
       await base44.entities.WhatsAppMessage.create({
-        to: normalizePhone10(form.recipient_phone),
-        message: form.message_body,
-        status: 'queued',
+        to: phone10,
+        recipient_name: form.recipient_name,
+        message,
+        message_body: message,
+        template_name: form.template_name,
+        status: 'opened',
       });
-      toast({ title: 'Message queued', description: 'WhatsApp provider is not connected yet. Message is saved in queue.' });
+      toast({ title: 'WhatsApp opened', description: 'Review the message and press Send inside WhatsApp.' });
       setShowSend(false);
       setForm(emptyForm);
       load();
-    } catch (e) { toast({ title: 'Error', description: e.message, variant: 'destructive' }); }
+    } catch (e) {
+      toast({ title: 'WhatsApp opened', description: 'Message history could not be saved.' });
+      console.error(e);
+    }
   };
 
   const selectTemplate = (template) => setForm(f => ({ ...f, template_name: template.name, message_body: template.body }));
 
-  const sent = messages.filter(m => m.status === 'sent' || m.status === 'delivered');
+  const opened = messages.filter(m => m.status === 'opened' || m.status === 'sent' || m.status === 'delivered');
   const pending = messages.filter(m => m.status === 'pending' || m.status === 'queued');
   const failed = messages.filter(m => m.status === 'failed');
 
@@ -73,27 +97,26 @@ export default function WhatsAppNotifications() {
     { key: 'to', label: 'Phone', render: (_, row) => row.to || row.recipient_phone || '—' },
     { key: 'message', label: 'Message', render: (_, row) => <span className="max-w-[240px] truncate block text-xs">{row.message || row.message_body || '—'}</span> },
     { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
-    { key: 'createdAt', label: 'Queued', render: (_, row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—' },
+    { key: 'createdAt', label: 'Opened', render: (_, row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—' },
   ];
 
   if (loading) return <div className="space-y-6"><PageHeader title="WhatsApp Notifications" /><SkeletonCard count={4} /></div>;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="WhatsApp Notifications" description="Send and track WhatsApp messages to members" actionLabel="Send Message" actionIcon={Send} onAction={() => setShowSend(true)} />
+      <PageHeader title="WhatsApp Notifications" description="Open WhatsApp messages for members" actionLabel="Send Message" actionIcon={Send} onAction={() => setShowSend(true)} />
 
       <div className="glass-card rounded-xl p-4 flex items-start gap-3" style={{ borderColor: NEON_BORDER }}>
-        <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} />
+        <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} />
         <div>
-          <p className="text-sm font-semibold" style={{ color: NEON_GREEN }}>WhatsApp Provider Setup Pending</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Connect WhatsApp Cloud API, Twilio, WATI, or Interakt to enable real message delivery. Messages are currently queued safely.</p>
-          <Button size="sm" variant="outline" className="mt-2 text-xs" style={{ borderColor: NEON_BORDER, color: NEON_GREEN }}>Configure Provider →</Button>
+          <p className="text-sm font-semibold" style={{ color: NEON_GREEN }}>WhatsApp Composer Enabled</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Messages now open in WhatsApp with the number and text pre-filled. You still press Send manually inside WhatsApp.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Total Messages" value={messages.length} icon={MessageSquare} />
-        <StatCard title="Sent/Delivered" value={sent.length} icon={Check} />
+        <StatCard title="Opened" value={opened.length} icon={Check} />
         <StatCard title="Pending" value={pending.length} icon={Clock} />
         <StatCard title="Failed" value={failed.length} icon={AlertTriangle} />
       </div>
@@ -128,7 +151,7 @@ export default function WhatsAppNotifications() {
           <DialogHeader><DialogTitle className="font-display">Send WhatsApp Message</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="p-3 rounded-lg text-xs text-muted-foreground" style={{ background: NEON_SOFT, border: `1px solid ${NEON_BORDER}` }}>
-              WhatsApp provider not connected. This message will be queued for delivery after provider setup.
+              This opens WhatsApp with your message ready. Check the message and press Send inside WhatsApp.
             </div>
             <div><Label className="text-sm text-muted-foreground">Recipient Name</Label><Input value={form.recipient_name} onChange={e => setForm({...form, recipient_name: e.target.value})} className="bg-secondary border-border" /></div>
             <div><Label className="text-sm text-muted-foreground">Phone Number *</Label><Input name="recipient_phone" type="tel" value={form.recipient_phone} onChange={e => setForm({...form, recipient_phone: normalizePhone10(e.target.value)})} className="bg-secondary border-border" placeholder="9876543210" /></div>
@@ -143,7 +166,7 @@ export default function WhatsAppNotifications() {
               </Select>
             </div>
             <div><Label className="text-sm text-muted-foreground">Message *</Label><Textarea value={form.message_body} onChange={e => setForm({...form, message_body: e.target.value})} className="bg-secondary border-border" rows={4} /></div>
-            <Button onClick={handleSend} className="w-full font-semibold" style={{ background: NEON_GREEN, color: '#000' }}><Send className="w-4 h-4 mr-2" /> Queue Message</Button>
+            <Button onClick={handleSend} className="w-full font-semibold" style={{ background: NEON_GREEN, color: '#000' }}><Send className="w-4 h-4 mr-2" /> Open WhatsApp</Button>
           </div>
         </DialogContent>
       </Dialog>
