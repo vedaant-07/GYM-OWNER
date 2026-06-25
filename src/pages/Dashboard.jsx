@@ -8,11 +8,10 @@ import {
   Clock, Zap, TrendingUp, Megaphone, Wrench, Star, Target,
   Download, Dumbbell, MessageSquare, Mail
 } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 
 const NEON_GREEN = '#20c55d';
-const CHART_COLORS = ['#20c55d', '#22C55E', '#16A34A', '#EF4444', '#3B82F6', '#A855F7'];
 
 const mockRevenue = [
   { month: 'Jan', revenue: 45000 }, { month: 'Feb', revenue: 52000 }, { month: 'Mar', revenue: 48000 },
@@ -24,11 +23,6 @@ const mockAttendance = [
   { day: 'Thu', count: 38 }, { day: 'Fri', count: 55 }, { day: 'Sat', count: 62 }, { day: 'Sun', count: 30 }
 ];
 
-const mockPlanSplit = [
-  { name: 'Monthly', value: 40 }, { name: 'Quarterly', value: 25 },
-  { name: 'Half-Yearly', value: 20 }, { name: 'Annual', value: 15 }
-];
-
 const ChartCard = ({ title, children }) => (
   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5">
     <h3 className="text-sm font-display font-semibold text-foreground mb-4">{title}</h3>
@@ -37,11 +31,14 @@ const ChartCard = ({ title, children }) => (
 );
 
 const QuickAction = ({ icon: Icon, label, to }) => (
-  <Link to={to} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group">
-    <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all group-hover:neon-glow" style={{ background: 'rgba(32,197,93,0.1)' }}>
-      <Icon className="w-5 h-5" style={{ color: NEON_GREEN }} />
+  <Link
+    to={to}
+    className="group flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-2xl border border-primary/25 bg-primary/10 p-4 text-center transition-all hover:-translate-y-1 hover:border-primary/60 hover:bg-primary/15 hover:shadow-[0_0_28px_rgba(32,197,93,0.16)]"
+  >
+    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/30 bg-primary/15 transition-all group-hover:scale-105 group-hover:neon-glow">
+      <Icon className="h-6 w-6" style={{ color: NEON_GREEN }} />
     </div>
-    <span className="text-xs text-muted-foreground group-hover:text-foreground text-center">{label}</span>
+    <span className="text-sm font-semibold leading-tight text-foreground group-hover:text-primary">{label}</span>
   </Link>
 );
 
@@ -151,25 +148,33 @@ export default function Dashboard() {
         <StatCard title="New Leads" value={(stats.newThisMonth) || 0} icon={Target} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ChartCard title="Revenue Trend">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={mockRevenue}>
-              <defs>
-                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={NEON_GREEN} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={NEON_GREEN} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-              <XAxis dataKey="month" stroke="#666" fontSize={11} />
-              <YAxis stroke="#666" fontSize={11} />
-              <Tooltip contentStyle={{ background: '#111', border: '1px solid #242424', borderRadius: 8, color: '#fff' }} />
-              <Area type="monotone" dataKey="revenue" stroke={NEON_GREEN} fill="url(#revGrad)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-card to-card p-5 shadow-[0_0_40px_rgba(32,197,93,0.08)]"
+      >
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Quick Actions</p>
+            <h3 className="text-xl font-display font-bold text-foreground">Run common gym tasks faster</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">Tap any action to jump directly into the workflow.</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <QuickAction icon={UserPlus} label="Add Member" to="/members" />
+          <QuickAction icon={Target} label="Add Lead" to="/leads" />
+          <QuickAction icon={ClipboardCheck} label="Attendance" to="/attendance" />
+          <QuickAction icon={Dumbbell} label="Assign Workout" to="/assigned-workouts" />
+          <QuickAction icon={Users} label="Assign Diet" to="/assigned-diets" />
+          <QuickAction icon={Megaphone} label="Campaign" to="/campaigns" />
+          <QuickAction icon={MessageSquare} label="WhatsApp" to="/whatsapp" />
+          <QuickAction icon={Zap} label="Referred" to="/referred-users" />
+          <QuickAction icon={Download} label="Reports" to="/reports" />
+          <QuickAction icon={Wrench} label="Equipment" to="/equipment" />
+        </div>
+      </motion.div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard title="Weekly Attendance">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={mockAttendance}>
@@ -180,19 +185,6 @@ export default function Dashboard() {
               <Bar dataKey="count" fill={NEON_GREEN} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Membership Plan Split">
-          <div className="flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={mockPlanSplit} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} fontSize={11}>
-                  {mockPlanSplit.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: '#111', border: '1px solid #242424', borderRadius: 8, color: '#fff' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
         </ChartCard>
 
         <ChartCard title="Member Growth">
@@ -212,22 +204,6 @@ export default function Dashboard() {
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
-      </div>
-
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="text-sm font-display font-semibold mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-10 gap-2">
-          <QuickAction icon={UserPlus} label="Add Member" to="/members" />
-          <QuickAction icon={Target} label="Add Lead" to="/leads" />
-          <QuickAction icon={ClipboardCheck} label="Attendance" to="/attendance" />
-          <QuickAction icon={Dumbbell} label="Assign Workout" to="/assigned-workouts" />
-          <QuickAction icon={Users} label="Assign Diet" to="/assigned-diets" />
-          <QuickAction icon={Megaphone} label="Campaign" to="/campaigns" />
-          <QuickAction icon={MessageSquare} label="WhatsApp" to="/whatsapp" />
-          <QuickAction icon={Zap} label="Referred" to="/referred-users" />
-          <QuickAction icon={Download} label="Reports" to="/reports" />
-          <QuickAction icon={Wrench} label="Equipment" to="/equipment" />
-        </div>
       </div>
     </div>
   );
