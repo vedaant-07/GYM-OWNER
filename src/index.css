@@ -129,7 +129,7 @@
 
 /* Landing page hero dotted background */
 #home > div:nth-child(2) {
-  background-image: radial-gradient(circle, rgba(255,255,255,0.075) 1px, transparent 1.8px) !important;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1.8px) !important;
   background-size: 24px 24px !important;
   background-repeat: repeat !important;
 }
