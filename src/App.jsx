@@ -49,8 +49,13 @@ const AuthenticatedApp = () => {
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: 'hsl(var(--border))', borderTopColor: '#20c55d' }}></div>
+      <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-background">
+        <div className="pointer-events-none absolute inset-0 flex select-none items-center justify-center">
+          <span className="whitespace-nowrap text-[clamp(4rem,16vw,13rem)] font-black uppercase tracking-[0.18em] text-foreground/5">
+            SE7EN FIT
+          </span>
+        </div>
+        <div className="relative z-10 w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: 'hsl(var(--border))', borderTopColor: '#20c55d' }}></div>
       </div>
     );
   }
