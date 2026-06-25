@@ -33,9 +33,9 @@ const ChartCard = ({ title, children }) => (
 const QuickAction = ({ icon: Icon, label, to }) => (
   <Link
     to={to}
-    className="group flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-2xl border border-primary/25 bg-primary/10 p-4 text-center transition-all hover:-translate-y-1 hover:border-primary/60 hover:bg-primary/15 hover:shadow-[0_0_28px_rgba(32,197,93,0.16)]"
+    className="group flex min-h-[104px] flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-white/[0.025] p-4 text-center transition-all hover:-translate-y-1 hover:border-primary/45 hover:bg-primary/10 hover:shadow-[0_0_24px_rgba(32,197,93,0.12)]"
   >
-    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/30 bg-primary/15 transition-all group-hover:scale-105 group-hover:neon-glow">
+    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 transition-all group-hover:scale-105 group-hover:border-primary/45 group-hover:neon-glow">
       <Icon className="h-6 w-6" style={{ color: NEON_GREEN }} />
     </div>
     <span className="text-sm font-semibold leading-tight text-foreground group-hover:text-primary">{label}</span>
@@ -148,32 +148,6 @@ export default function Dashboard() {
         <StatCard title="New Leads" value={(stats.newThisMonth) || 0} icon={Target} />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-card to-card p-5 shadow-[0_0_40px_rgba(32,197,93,0.08)]"
-      >
-        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Quick Actions</p>
-            <h3 className="text-xl font-display font-bold text-foreground">Run common gym tasks faster</h3>
-          </div>
-          <p className="text-sm text-muted-foreground">Tap any action to jump directly into the workflow.</p>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <QuickAction icon={UserPlus} label="Add Member" to="/members" />
-          <QuickAction icon={Target} label="Add Lead" to="/leads" />
-          <QuickAction icon={ClipboardCheck} label="Attendance" to="/attendance" />
-          <QuickAction icon={Dumbbell} label="Assign Workout" to="/assigned-workouts" />
-          <QuickAction icon={Users} label="Assign Diet" to="/assigned-diets" />
-          <QuickAction icon={Megaphone} label="Campaign" to="/campaigns" />
-          <QuickAction icon={MessageSquare} label="WhatsApp" to="/whatsapp" />
-          <QuickAction icon={Zap} label="Referred" to="/referred-users" />
-          <QuickAction icon={Download} label="Reports" to="/reports" />
-          <QuickAction icon={Wrench} label="Equipment" to="/equipment" />
-        </div>
-      </motion.div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard title="Weekly Attendance">
           <ResponsiveContainer width="100%" height={220}>
@@ -205,6 +179,32 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </ChartCard>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card rounded-xl p-5"
+      >
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Quick Actions</p>
+            <h3 className="text-xl font-display font-bold text-foreground">Run common gym tasks faster</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">Tap any action to jump directly into the workflow.</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <QuickAction icon={UserPlus} label="Add Member" to="/members" />
+          <QuickAction icon={Target} label="Add Lead" to="/leads" />
+          <QuickAction icon={ClipboardCheck} label="Attendance" to="/attendance" />
+          <QuickAction icon={Dumbbell} label="Assign Workout" to="/assigned-workouts" />
+          <QuickAction icon={Users} label="Assign Diet" to="/assigned-diets" />
+          <QuickAction icon={Megaphone} label="Campaign" to="/campaigns" />
+          <QuickAction icon={MessageSquare} label="WhatsApp" to="/whatsapp" />
+          <QuickAction icon={Zap} label="Referred" to="/referred-users" />
+          <QuickAction icon={Download} label="Reports" to="/reports" />
+          <QuickAction icon={Wrench} label="Equipment" to="/equipment" />
+        </div>
+      </motion.div>
     </div>
   );
 }
