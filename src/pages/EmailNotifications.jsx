@@ -28,7 +28,24 @@ const EMAIL_TEMPLATES = [
 ];
 
 const emptyForm = { recipient_name: '', recipient_email: '', subject: '', body: '', template_name: '' };
-const emptyProviderStatus = { configured: false, missing: [], from: null, host: null };
+const emptyProviderStatus = { configured: false, missing: [], from: null, host: null, error: null, statusCheckFailed: false };
+
+async function loadProviderStatus() {
+  try {
+    return await apiRequest('/api/email-notifications/provider-status-public');
+  } catch (publicStatusError) {
+    try {
+      return await apiRequest('/api/gym-owner/email-notifications/status');
+    } catch (authStatusError) {
+      console.error('Email provider status check failed:', publicStatusError, authStatusError);
+      return {
+        ...emptyProviderStatus,
+        statusCheckFailed: true,
+        error: publicStatusError?.message || authStatusError?.message || 'Could not read backend email provider status.',
+      };
+    }
+  }
+}
 
 export default function EmailNotifications() {
   const [emails, setEmails] = useState([]);
@@ -39,6 +56,12 @@ export default function EmailNotifications() {
   const { toast } = useToast();
 
   const providerConfigured = Boolean(providerStatus?.configured);
+  const missingProviderSettings = (providerStatus.missing || []).join(', ');
+  const providerMessage = providerConfigured
+    ? `Provider is active${providerStatus.from ? ` from ${providerStatus.from}` : ''}. Emails will be sent from the backend.`
+    : providerStatus.statusCheckFailed
+      ? `Cannot read backend SMTP status. ${providerStatus.error || 'Redeploy the backend and check the API URL.'}`
+      : `Add the SMTP environment variables in your backend. Missing: ${missingProviderSettings || 'provider settings'}.`;
 
   useEffect(() => { load(); }, []);
 
@@ -47,13 +70,14 @@ export default function EmailNotifications() {
     try {
       const [emailList, status] = await Promise.all([
         base44.entities.EmailMessage.list(),
-        apiRequest('/api/gym-owner/email-notifications/status').catch(() => emptyProviderStatus),
+        loadProviderStatus(),
       ]);
       setEmails(Array.isArray(emailList) ? emailList : []);
       setProviderStatus(status || emptyProviderStatus);
     } catch (e) {
       console.error(e);
       setEmails([]);
+      setProviderStatus({ ...emptyProviderStatus, statusCheckFailed: true, error: e.message });
     }
     setLoading(false);
   };
@@ -105,11 +129,7 @@ export default function EmailNotifications() {
         {providerConfigured ? <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} /> : <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} />}
         <div>
           <p className="text-sm font-semibold" style={{ color: NEON_GREEN }}>{providerConfigured ? 'Email Provider Connected' : 'Email Provider Setup Pending'}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {providerConfigured
-              ? `Provider is active${providerStatus.from ? ` from ${providerStatus.from}` : ''}. Emails will be sent from the backend.`
-              : `Add the SMTP environment variables in your backend. Missing: ${(providerStatus.missing || []).join(', ') || 'provider settings'}.`}
-          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">{providerMessage}</p>
           {!providerConfigured && <Button size="sm" variant="outline" className="mt-2 text-xs" style={{ borderColor: NEON_BORDER, color: NEON_GREEN }} disabled>Configure SMTP in backend →</Button>}
         </div>
       </div>
