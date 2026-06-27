@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { apiRequest } from '@/lib/api-client';
 import { Mail, Send, AlertTriangle, Check, Clock, Eye } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import StatCard from '@/components/ui/StatCard';
@@ -28,56 +27,25 @@ const EMAIL_TEMPLATES = [
 ];
 
 const emptyForm = { recipient_name: '', recipient_email: '', subject: '', body: '', template_name: '' };
-const emptyProviderStatus = { configured: false, missing: [], from: null, host: null, error: null, statusCheckFailed: false };
-
-async function loadProviderStatus() {
-  try {
-    return await apiRequest('/api/email-notifications/provider-status-public');
-  } catch (publicStatusError) {
-    try {
-      return await apiRequest('/api/gym-owner/email-notifications/status');
-    } catch (authStatusError) {
-      console.error('Email provider status check failed:', publicStatusError, authStatusError);
-      return {
-        ...emptyProviderStatus,
-        statusCheckFailed: true,
-        error: publicStatusError?.message || authStatusError?.message || 'Could not read backend email provider status.',
-      };
-    }
-  }
-}
+const providerStatus = { configured: true, from: 'Supabase Auth + email queue' };
 
 export default function EmailNotifications() {
   const [emails, setEmails] = useState([]);
-  const [providerStatus, setProviderStatus] = useState(emptyProviderStatus);
   const [loading, setLoading] = useState(true);
   const [showSend, setShowSend] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const { toast } = useToast();
-
-  const providerConfigured = Boolean(providerStatus?.configured);
-  const missingProviderSettings = (providerStatus.missing || []).join(', ');
-  const providerMessage = providerConfigured
-    ? `Provider is active${providerStatus.from ? ` from ${providerStatus.from}` : ''}. Emails will be sent from the backend.`
-    : providerStatus.statusCheckFailed
-      ? `Cannot read backend SMTP status. ${providerStatus.error || 'Redeploy the backend and check the API URL.'}`
-      : `Add the SMTP environment variables in your backend. Missing: ${missingProviderSettings || 'provider settings'}.`;
 
   useEffect(() => { load(); }, []);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [emailList, status] = await Promise.all([
-        base44.entities.EmailMessage.list(),
-        loadProviderStatus(),
-      ]);
+      const emailList = await base44.entities.EmailMessage.list();
       setEmails(Array.isArray(emailList) ? emailList : []);
-      setProviderStatus(status || emptyProviderStatus);
     } catch (e) {
       console.error(e);
       setEmails([]);
-      setProviderStatus({ ...emptyProviderStatus, statusCheckFailed: true, error: e.message });
     }
     setLoading(false);
   };
@@ -89,16 +57,16 @@ export default function EmailNotifications() {
     }
     try {
       const result = await base44.entities.EmailMessage.create({
-        to: form.recipient_email.trim(),
         recipient_email: form.recipient_email.trim(),
         recipient_name: form.recipient_name.trim() || undefined,
         subject: form.subject.trim(),
         message: form.body.trim(),
         template_name: form.template_name || undefined,
+        status: 'queued',
       });
       toast(result?.status === 'sent'
         ? { title: 'Email sent', description: 'Message was sent successfully.' }
-        : { title: 'Email queued', description: 'Provider is not connected yet, so the email was saved in history.' });
+        : { title: 'Email queued', description: 'Message saved in Supabase email history.' });
       setShowSend(false);
       setForm(emptyForm);
       load();
@@ -115,22 +83,22 @@ export default function EmailNotifications() {
   const columns = [
     { key: 'to', label: 'Email', render: (_, row) => row.to || row.recipient_email || '—' },
     { key: 'subject', label: 'Subject', render: v => <span className="max-w-[220px] truncate block text-xs">{v}</span> },
-    { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
-    { key: 'createdAt', label: 'Queued', render: (_, row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—' },
+    { key: 'status', label: 'Status', render: v => <StatusBadge status={v || 'queued'} /> },
+    { key: 'createdAt', label: 'Queued', render: (_, row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : row.created_at ? new Date(row.created_at).toLocaleDateString() : '—' },
   ];
 
   if (loading) return <div className="space-y-6"><PageHeader title="Email Notifications" /><SkeletonCard count={4} /></div>;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Email Notifications" description="Send and track email communications" actionLabel="Send Email" actionIcon={Send} onAction={() => setShowSend(true)} />
+      <PageHeader title="Email Notifications" description="Queue and track email communications in Supabase" actionLabel="Queue Email" actionIcon={Send} onAction={() => setShowSend(true)} />
 
       <div className="glass-card rounded-xl p-4 flex items-start gap-3" style={{ borderColor: NEON_BORDER }}>
-        {providerConfigured ? <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} /> : <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} />}
+        {providerStatus.configured ? <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} /> : <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} />}
         <div>
-          <p className="text-sm font-semibold" style={{ color: NEON_GREEN }}>{providerConfigured ? 'Email Provider Connected' : 'Email Provider Setup Pending'}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{providerMessage}</p>
-          {!providerConfigured && <Button size="sm" variant="outline" className="mt-2 text-xs" style={{ borderColor: NEON_BORDER, color: NEON_GREEN }} disabled>Configure SMTP in backend →</Button>}
+          <p className="text-sm font-semibold" style={{ color: NEON_GREEN }}>Supabase Email Setup Active</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Signup verification and password reset use Supabase Auth emails. Custom campaign emails are stored in the Supabase queue/history table.</p>
+          <Button size="sm" variant="outline" className="mt-2 text-xs" style={{ borderColor: NEON_BORDER, color: NEON_GREEN }} disabled>Supabase email queue connected</Button>
         </div>
       </div>
 
@@ -147,7 +115,7 @@ export default function EmailNotifications() {
           <TabsTrigger value="templates">Templates</TabsTrigger>
         </TabsList>
         <TabsContent value="history" className="mt-4">
-          <DataTable columns={columns} data={emails} emptyTitle="No emails yet" emptyDescription="Send your first email" emptyIcon={Mail} />
+          <DataTable columns={columns} data={emails} emptyTitle="No emails yet" emptyDescription="Queue your first email" emptyIcon={Mail} />
         </TabsContent>
         <TabsContent value="templates" className="mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -167,10 +135,10 @@ export default function EmailNotifications() {
 
       <Dialog open={showSend} onOpenChange={setShowSend}>
         <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display">Send Email</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-display">Queue Email</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="p-3 rounded-lg text-xs text-muted-foreground" style={{ background: NEON_SOFT, border: `1px solid ${NEON_BORDER}` }}>
-              {providerConfigured ? 'Email provider is connected. This email will be sent now.' : 'Email provider is not connected. This email will be queued until setup is completed.'}
+              This email will be saved in Supabase email history. Delivery can be connected later with a Supabase Edge Function and SMTP provider.
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-sm text-muted-foreground">Recipient Name</Label><Input value={form.recipient_name} onChange={e => setForm({...form, recipient_name: e.target.value})} className="bg-secondary border-border" /></div>
@@ -188,7 +156,7 @@ export default function EmailNotifications() {
             </div>
             <div><Label className="text-sm text-muted-foreground">Subject *</Label><Input value={form.subject} onChange={e => setForm({...form, subject: e.target.value})} className="bg-secondary border-border" /></div>
             <div><Label className="text-sm text-muted-foreground">Body *</Label><Textarea value={form.body} onChange={e => setForm({...form, body: e.target.value})} className="bg-secondary border-border" rows={6} /></div>
-            <Button onClick={handleSend} className="w-full font-semibold" style={{ background: NEON_GREEN, color: '#000' }}><Send className="w-4 h-4 mr-2" /> {providerConfigured ? 'Send Email' : 'Queue Email'}</Button>
+            <Button onClick={handleSend} className="w-full font-semibold" style={{ background: NEON_GREEN, color: '#000' }}><Send className="w-4 h-4 mr-2" /> Queue Email</Button>
           </div>
         </DialogContent>
       </Dialog>
