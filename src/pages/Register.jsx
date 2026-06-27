@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Lock, Loader2, User, Phone, Building2 } from "lucide-react";
+import { UserPlus, Mail, Lock, Loader2, User, Phone, Building2, CheckCircle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { useAuth } from "@/lib/AuthContext";
 import { renderGoogleSignInButton } from "@/lib/google-web-auth";
@@ -16,11 +16,12 @@ export default function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
 
   const showError = (message) => {
     setError(message);
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-    errorTimerRef.current = setTimeout(() => setError(""), 2000);
+    errorTimerRef.current = setTimeout(() => setError(""), 3000);
   };
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      await register({
+      const result = await register({
         name: ownerName,
         ownerName,
         gymName,
@@ -97,6 +98,12 @@ export default function Register() {
         email,
         password,
       });
+
+      if (result?.requires_email_verification || !result?.access_token) {
+        setVerificationEmail(email);
+        return;
+      }
+
       window.location.href = "/onboarding";
     } catch (err) {
       showError(err.message || "Registration failed");
@@ -108,6 +115,36 @@ export default function Register() {
   const limitPhone = (event) => {
     event.currentTarget.value = normalizePhone10(event.currentTarget.value);
   };
+
+  if (verificationEmail) {
+    return (
+      <AuthLayout
+        icon={CheckCircle}
+        title="Verify your email"
+        subtitle="We sent a confirmation email to activate your owner account"
+        footer={
+          <>
+            Already verified?{" "}
+            <Link to="/login" className="text-primary font-medium hover:underline">
+              Log in
+            </Link>
+          </>
+        }
+      >
+        <div className="space-y-4 text-center">
+          <p className="text-sm text-foreground">
+            Check <span className="font-semibold">{verificationEmail}</span> and open the verification link from Supabase/SE7EN FIT.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            After verification, return to login and use your email/password.
+          </p>
+          <Button type="button" className="w-full h-12 font-medium" onClick={() => (window.location.href = "/login")}>
+            Go to login
+          </Button>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout
