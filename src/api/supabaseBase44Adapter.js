@@ -29,6 +29,10 @@ function toTableName(entityName) {
   return snake.endsWith('s') ? snake : `${snake}s`
 }
 
+function authRedirect(path) {
+  return `${window.location.origin}${path}`
+}
+
 async function getUser() {
   const { data, error } = await supabase.auth.getUser()
   if (error) throw error
@@ -175,7 +179,14 @@ export const base44 = {
   auth: {
     async loginViaEmailPassword(email, password) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
+      if (error) {
+        const message = String(error.message || '')
+        if (message.toLowerCase().includes('email not confirmed')) {
+          await supabase.auth.resend({ type: 'signup', email }).catch(() => null)
+          throw new Error('Email is not verified. We sent a new verification email. Please verify and try again.')
+        }
+        throw error
+      }
       tokenStore.set(data.session?.access_token)
       userStore.set(data.user)
       return { access_token: data.session?.access_token, token: data.session?.access_token, user: data.user }
@@ -183,33 +194,64 @@ export const base44 = {
 
     async register(payload = {}) {
       const email = payload.email
+      const password = payload.password
       const { data, error } = await supabase.auth.signUp({
         email,
-        password: payload.password,
+        password,
         options: {
+          emailRedirectTo: authRedirect('/login'),
           data: {
             role: 'gym_owner',
             full_name: payload.name || payload.ownerName || email?.split('@')[0] || 'Gym Owner',
             phone: payload.phone || payload.mobile || null,
+            gym_name: payload.gymName || null,
           },
         },
       })
       if (error) throw error
       tokenStore.set(data.session?.access_token)
       userStore.set(data.user)
-      return { access_token: data.session?.access_token, token: data.session?.access_token, user: data.user }
+      return {
+        access_token: data.session?.access_token,
+        token: data.session?.access_token,
+        user: data.user,
+        requires_email_verification: Boolean(data.user && !data.session),
+      }
+    },
+
+    async resetPasswordRequest(email) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: authRedirect('/reset-password'),
+      })
+      if (error) throw error
+      return { success: true }
+    },
+
+    async resetPassword({ newPassword }) {
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (!sessionData?.session) throw new Error('Reset link expired or invalid. Please request a new password reset email.')
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+      return { success: true }
     },
 
     async loginWithGoogleCredential() {
       throw new Error('Google login must be enabled in Supabase Auth providers before use.')
     },
 
-    async verifyOtp() {
-      const { data } = await supabase.auth.getSession()
-      return { access_token: data.session?.access_token || tokenStore.get() }
+    async verifyOtp({ email, token, type = 'email' } = {}) {
+      if (!email || !token) return { access_token: tokenStore.get() }
+      const { data, error } = await supabase.auth.verifyOtp({ email, token, type })
+      if (error) throw error
+      tokenStore.set(data.session?.access_token)
+      userStore.set(data.user)
+      return { access_token: data.session?.access_token, token: data.session?.access_token, user: data.user }
     },
 
-    async resendOtp() {
+    async resendOtp(email) {
+      if (!email) return { success: true }
+      const { error } = await supabase.auth.resend({ type: 'signup', email })
+      if (error) throw error
       return { success: true }
     },
 
