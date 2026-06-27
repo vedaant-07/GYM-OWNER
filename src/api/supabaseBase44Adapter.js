@@ -6,16 +6,19 @@ const entityTables = {
   GymMember: 'members',
   Member: 'members',
   Profile: 'profiles',
+  EmailMessage: 'email_messages',
 }
 
 const primaryKeys = {
   gyms: 'gym_id',
   members: 'member_id',
   profiles: 'user_id',
+  email_messages: 'id',
 }
 
 const ownerColumns = {
   gyms: 'owner_profile_id',
+  email_messages: 'owner_profile_id',
 }
 
 const singletonEntities = new Set(['GymProfile', 'Profile'])
@@ -54,6 +57,12 @@ function normalizeRow(entityName, row) {
     normalized.mobile = row.mobile || row.phone || ''
   }
 
+  if (entityName === 'EmailMessage') {
+    normalized.to = row.to || row.recipient_email || ''
+    normalized.createdAt = row.createdAt || row.created_at
+    normalized.message = row.message || row.body || ''
+  }
+
   return normalized
 }
 
@@ -74,6 +83,15 @@ function normalizePayload(entityName, payload = {}, user) {
     next.user_id = user?.id
     next.email = next.email || user?.email || null
     next.role = next.role || 'gym_owner'
+  }
+
+  if (table === 'email_messages') {
+    next.owner_profile_id = user?.id
+    next.recipient_email = next.recipient_email || next.to || ''
+    next.message = next.message || next.body || ''
+    next.status = next.status || 'queued'
+    delete next.to
+    delete next.body
   }
 
   return next
