@@ -10,14 +10,10 @@ services:
       - key: NODE_VERSION
         value: 22
       - key: VITE_API_BASE_URL
-        value: https://se7enfit-original.onrender.com
+        value: https://se7en-fit-api.onrender.com/api
       - key: VITE_ADMIN_DASHBOARD_URL
         value: https://se7enfit-admin.onrender.com/admin
-      - key: VITE_SUPABASE_URL
-        value: https://kgzgwapaxgjhmhbphltl.supabase.co
-      - key: VITE_SUPABASE_PUBLISHABLE_KEY
-        sync: false
     routes:
       - type: rewrite
-        source: /*
+        source: "/*"
         destination: /index.html
