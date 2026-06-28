@@ -120,6 +120,19 @@
 @layer base {
   * { @apply border-border outline-ring/50; }
   body { @apply bg-background text-foreground font-body transition-colors duration-200; }
+  input, textarea, select { background-color: hsl(var(--background)) !important; color: hsl(var(--foreground)) !important; }
+  input::placeholder, textarea::placeholder { color: hsl(var(--muted-foreground)) !important; }
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    -webkit-box-shadow: 0 0 0px 1000px hsl(var(--background)) inset !important;
+    box-shadow: 0 0 0px 1000px hsl(var(--background)) inset !important;
+    caret-color: hsl(var(--foreground)) !important;
+    transition: background-color 9999s ease-in-out 0s;
+  }
 }
 
 /* Neon glow utilities */
@@ -134,26 +147,11 @@
   background-repeat: repeat !important;
 }
 
-.dark .glass-card {
-  background: rgba(17,17,17,0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(36,36,36,0.8);
-}
-.light .glass-card {
-  background: rgba(255,252,244,0.92);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(224,214,195,0.82);
-}
+.dark .glass-card { background: rgba(17,17,17,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(36,36,36,0.8); }
+.light .glass-card { background: rgba(255,252,244,0.92); backdrop-filter: blur(20px); border: 1px solid rgba(224,214,195,0.82); }
 .glass-card { border-radius: 0.75rem; }
-
-.dark .glass-card-hover:hover {
-  border-color: rgba(32,197,93,0.28);
-  box-shadow: 0 0 30px rgba(32,197,93,0.08);
-}
-.light .glass-card-hover:hover {
-  border-color: rgba(32,197,93,0.32);
-  box-shadow: 0 8px 26px rgba(60,45,20,0.08);
-}
+.dark .glass-card-hover:hover { border-color: rgba(32,197,93,0.28); box-shadow: 0 0 30px rgba(32,197,93,0.08); }
+.light .glass-card-hover:hover { border-color: rgba(32,197,93,0.32); box-shadow: 0 8px 26px rgba(60,45,20,0.08); }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -166,5 +164,4 @@
 @keyframes float-up { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-12px); } }
 @keyframes slide-in-left { from { transform:translateX(-100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
 @keyframes fade-in-up { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-
 .animate-fade-in-up { animation: fade-in-up 0.4s ease-out forwards; }
