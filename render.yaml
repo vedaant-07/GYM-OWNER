@@ -1,9 +1,20 @@
 services:
   - type: web
-    name: gym-owner
+    name: se7enfit-gym-owner
     runtime: static
+    branch: main
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: VITE_API_BASE_URL
+        value: https://se7enfit-original.onrender.com
+      - key: VITE_SUPABASE_URL
+        value: https://kgzgwapaxgjhmhbphltl.supabase.co
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
     routes:
       - type: rewrite
         source: /*
