@@ -1,5 +1,7 @@
 import { apiRequest, tokenStore, userStore } from '@/lib/api-client'
 
+const normalizeId = (row = {}, ...keys) => ({ ...row, id: keys.map((key) => row[key]).find(Boolean) || row.id })
+
 function normalizeGym(row = {}, owner = {}) {
   return {
     ...row,
@@ -17,10 +19,11 @@ function normalizeGym(row = {}, owner = {}) {
 
 function normalizeMember(row = {}) {
   const profile = row.profile || row.profiles || row.user_profile || {}
+  const id = row.membership_id || row.member_id || row.id
   return {
     ...row,
-    id: row.membership_id || row.member_id || row.id,
-    membership_id: row.membership_id,
+    id,
+    membership_id: row.membership_id || id,
     user_id: row.user_id,
     name: row.name || profile.full_name || profile.name || row.user_name || 'SE7EN FIT User',
     user_name: row.user_name || profile.full_name || profile.name || row.name || 'SE7EN FIT User',
@@ -29,7 +32,7 @@ function normalizeMember(row = {}) {
     membership_plan: row.membership_plan || row.plan_code || row.plan || 'SE7EN FIT',
     membership_status: row.membership_status || row.status || 'active',
     conversion_status: row.conversion_status || (row.status === 'active' ? 'converted' : 'pending'),
-    joined_date: row.joined_date || row.joined_at?.slice?.(0, 10) || row.created_at?.slice?.(0, 10),
+    joined_date: row.joined_date || row.joined_at?.slice?.(0, 10) || row.join_date || row.created_at?.slice?.(0, 10),
     gym_linked_date: row.gym_linked_date || row.approved_at?.slice?.(0, 10),
     source: row.source || 'se7en_fit',
     referral_source: row.referral_source || row.referred_by_code || 'SE7EN FIT App',
@@ -38,113 +41,49 @@ function normalizeMember(row = {}) {
 }
 
 function normalizeLead(row = {}) {
-  return {
-    ...row,
-    id: row.lead_id || row.id,
-    name: row.name || row.user_name || row.full_name || 'Lead',
-    status: row.status || 'new',
-  }
-}
-
-function normalizeLeadAsMember(row = {}) {
-  const leadId = row.lead_id || row.id
-  return {
-    ...row,
-    id: `lead-${leadId}`,
-    lead_id: leadId,
-    name: row.name || row.user_name || 'Manual Member',
-    user_name: row.name || row.user_name || 'Manual Member',
-    phone: row.phone || '',
-    email: row.email || '',
-    membership_plan: row.membership_plan || row.subscription_plan || 'Manual',
-    status: row.status === 'lost' ? 'removed' : 'active',
-    membership_status: row.status === 'lost' ? 'removed' : 'active',
-    conversion_status: row.status === 'lost' ? 'lost' : 'converted',
-    source: row.source || 'walk_in',
-    referral_source: 'Gym Owner',
-    joined_date: row.created_at?.slice?.(0, 10),
-    notes: row.notes || row.message || '',
-  }
+  return { ...row, id: row.lead_id || row.id, name: row.name || row.user_name || row.full_name || 'Lead', status: row.status || 'new' }
 }
 
 function normalizeAttendance(row = {}) {
-  return {
-    ...row,
-    id: row.log_id || row.id,
-    check_in_time: row.check_in_time || row.check_in_at,
-    check_out_time: row.check_out_time || row.check_out_at,
-    member_name: row.member_name || row.user_name || row.name || 'Member',
-  }
+  return { ...row, id: row.log_id || row.id, check_in_time: row.check_in_time || row.check_in_at, check_out_time: row.check_out_time || row.check_out_at, member_name: row.member_name || row.user_name || row.name || 'Member' }
 }
 
-function normalizeEquipment(row = {}) { return { ...row, id: row.equipment_id || row.id } }
-function normalizeAd(row = {}) { return { ...row, id: row.ad_id || row.id } }
-function isLeadMember(id) { return String(id || '').startsWith('lead-') }
-function getLeadId(id) { return String(id || '').split('lead-').join('') }
 function productionError(entityName) { return new Error(`${entityName} is not connected to a production API route yet.`) }
-
 async function getCurrentGym() {
   const result = await apiRequest('/gym-owners/me')
   const gyms = result?.gyms || (result?.gym ? [result.gym] : [])
   return gyms[0] ? normalizeGym(gyms[0], result?.owner || {}) : null
 }
 
-async function getConvertedLeadsAsMembers() {
-  const rows = await apiRequest('/gym-owner/leads')
-  return (Array.isArray(rows) ? rows : []).filter((lead) => ['converted', 'active'].includes(lead.status)).map(normalizeLeadAsMember)
+function endpointAdapter(path, idKey, normalizer = (row) => row) {
+  return {
+    async list() { const rows = await apiRequest(path); return (Array.isArray(rows) ? rows : []).map((row) => normalizer(normalizeId(row, idKey))) },
+    async filter(params = {}) { const rows = await this.list(); return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value)) },
+    async get(id) { const rows = await this.list(); return rows.find((row) => row.id === id || row[idKey] === id) || null },
+    async create(payload = {}) { return normalizer(normalizeId(await apiRequest(path, { method: 'POST', body: payload }), idKey)) },
+    async update(id, payload = {}) { return normalizer(normalizeId(await apiRequest(`${path}/${id}`, { method: 'PATCH', body: payload }), idKey)) },
+    async delete(id) { await apiRequest(`${path}/${id}`, { method: 'DELETE' }); return { success: true } },
+  }
 }
 
 const entityAdapters = {
   GymProfile: {
-    async list() {
-      const result = await apiRequest('/gym-owners/me')
-      const gyms = result?.gyms || (result?.gym ? [result.gym] : [])
-      return gyms.map((gym) => normalizeGym(gym, result?.owner || {}))
-    },
+    async list() { const result = await apiRequest('/gym-owners/me'); const gyms = result?.gyms || (result?.gym ? [result.gym] : []); return gyms.map((gym) => normalizeGym(gym, result?.owner || {})) },
     async get() { const list = await this.list(); return list[0] || null },
-    async create(payload = {}) {
-      const result = await apiRequest('/gym-owners/onboarding', { method: 'POST', body: payload })
-      return normalizeGym(result?.gym || result, result?.owner || {})
-    },
-    async update(_id, payload = {}) {
-      const result = await apiRequest('/gym-owners/me', { method: 'PUT', body: payload })
-      return normalizeGym(result)
-    },
+    async create(payload = {}) { const result = await apiRequest('/gym-owners/onboarding', { method: 'POST', body: payload }); return normalizeGym(result?.gym || result, result?.owner || {}) },
+    async update(_id, payload = {}) { return normalizeGym(await apiRequest('/gym-owners/me', { method: 'PUT', body: payload })) },
   },
 
   GymMember: {
-    async list() {
-      const appMembers = await apiRequest('/gym-owner/members')
-      const manualMembers = await getConvertedLeadsAsMembers().catch(() => [])
-      return [...(Array.isArray(appMembers) ? appMembers : []).map(normalizeMember), ...manualMembers]
-    },
-    async filter(params = {}) {
-      const rows = await this.list()
-      return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value))
-    },
-    async update(id, payload = {}) {
-      if (isLeadMember(id)) {
-        const result = await apiRequest(`/gym-owner/leads/${getLeadId(id)}`, { method: 'PATCH', body: { ...payload, name: payload.name || payload.user_name, status: payload.status === 'removed' ? 'lost' : 'converted' } })
-        return normalizeLeadAsMember(result)
-      }
-      const result = await apiRequest(`/gym-owner/members/${id}`, { method: 'PATCH', body: payload })
-      return normalizeMember(result)
-    },
-    async create(payload = {}) {
-      const gym = await getCurrentGym().catch(() => null)
-      const created = await apiRequest('/gym-leads', { method: 'POST', body: { ...payload, gym_id: gym?.gym_id, name: payload.name || payload.user_name, source: payload.source || 'gym_owner', message: payload.notes || '' } })
-      const updated = await apiRequest(`/gym-owner/leads/${created.lead_id || created.id}`, { method: 'PATCH', body: { status: 'converted' } }).catch(() => created)
-      return normalizeLeadAsMember(updated)
-    },
-    async delete(id) {
-      if (isLeadMember(id)) await apiRequest(`/gym-owner/leads/${getLeadId(id)}`, { method: 'PATCH', body: { status: 'lost' } })
-      else await apiRequest(`/gym-owner/members/${id}`, { method: 'PATCH', body: { status: 'removed' } })
-      return { success: true }
-    },
+    async list() { const rows = await apiRequest('/gym-owner/members'); return (Array.isArray(rows) ? rows : []).map(normalizeMember) },
+    async filter(params = {}) { const rows = await this.list(); return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value)) },
+    async create(payload = {}) { return normalizeMember(await apiRequest('/gym-owner/members', { method: 'POST', body: { ...payload, name: payload.name || payload.user_name } })) },
+    async update(id, payload = {}) { return normalizeMember(await apiRequest(`/gym-owner/members/${id}`, { method: 'PATCH', body: payload })) },
+    async delete(id) { await apiRequest(`/gym-owner/members/${id}`, { method: 'DELETE' }); return { success: true } },
   },
 
   SE7ENFITReferredUser: {
-    async list() { const rows = await apiRequest('/gym-owner/members'); return (Array.isArray(rows) ? rows : []).map(normalizeMember) },
+    async list() { const rows = await apiRequest('/gym-owner/members'); return (Array.isArray(rows) ? rows : []).filter((row) => !row.manual).map(normalizeMember) },
     async filter(params = {}) { const rows = await this.list(); return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value)) },
     async update(id, payload = {}) { const status = payload.membership_status || (payload.conversion_status === 'converted' ? 'active' : payload.status); return normalizeMember(await apiRequest(`/gym-owner/members/${id}`, { method: 'PATCH', body: { ...payload, status } })) },
     async create(payload = {}) { const gym = await getCurrentGym().catch(() => null); return normalizeLead(await apiRequest('/gym-leads', { method: 'POST', body: { ...payload, gym_id: gym?.gym_id, name: payload.user_name || payload.name, source: 'gym_owner' } })) },
@@ -162,25 +101,29 @@ const entityAdapters = {
     async filter(params = {}) { const rows = await this.list(); return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value)) },
   },
 
-  GymEquipment: {
-    async list() { const rows = await apiRequest('/gym-owner/equipment'); return (Array.isArray(rows) ? rows : []).map(normalizeEquipment) },
-    async create(payload = {}) { return normalizeEquipment(await apiRequest('/gym-owner/equipment', { method: 'POST', body: payload })) },
-    async update(id, payload = {}) { return normalizeEquipment(await apiRequest(`/gym-owner/equipment/${id}`, { method: 'PATCH', body: payload })) },
-    async delete(id) { await apiRequest(`/gym-owner/equipment/${id}`, { method: 'DELETE' }); return { success: true } },
-  },
+  GymEquipment: endpointAdapter('/gym-owner/equipment', 'equipment_id'),
+  GymPlan: endpointAdapter('/gym-owner/plans', 'plan_id'),
+  MembershipPlan: endpointAdapter('/gym-owner/plans', 'plan_id'),
+  GymClass: endpointAdapter('/gym-owner/classes', 'class_id'),
+  ClassSchedule: endpointAdapter('/gym-owner/classes', 'class_id'),
+  GymReview: endpointAdapter('/gym-owner/reviews', 'review_id'),
+  Review: endpointAdapter('/gym-owner/reviews', 'review_id'),
+  GymStaff: endpointAdapter('/gym-owner/staff', 'id'),
+  StaffMember: endpointAdapter('/gym-owner/staff', 'id'),
+  WorkoutPlan: endpointAdapter('/gym-owner/workout-plans', 'plan_id'),
+  DietPlan: endpointAdapter('/gym-owner/diet-plans', 'plan_id'),
 
-  Campaign: {
-    async list() { const rows = await apiRequest('/gym-owner/advertisements'); return (Array.isArray(rows) ? rows : []).map(normalizeAd) },
-    async create(payload = {}) { return normalizeAd(await apiRequest('/gym-owner/advertisements', { method: 'POST', body: payload })) },
-    async update(id, payload = {}) { return normalizeAd(await apiRequest(`/gym-owner/advertisements/${id}`, { method: 'PATCH', body: payload })) },
-    async delete(id) { await apiRequest(`/gym-owner/advertisements/${id}`, { method: 'DELETE' }); return { success: true } },
-  },
-
+  Campaign: endpointAdapter('/gym-owner/advertisements', 'ad_id'),
   Advertisement: null,
-  GymPlan: null,
+
   SupportTicket: {
     async list() { const rows = await apiRequest('/support/tickets/me'); return Array.isArray(rows) ? rows : [] },
     async create(payload = {}) { return apiRequest('/support/tickets', { method: 'POST', body: { ...payload, source: 'gym_owner' } }) },
+  },
+
+  GymReport: {
+    async list() { const result = await apiRequest('/gym-owner/reports'); return result ? [result] : [] },
+    async get() { return apiRequest('/gym-owner/reports') },
   },
 }
 entityAdapters.Advertisement = entityAdapters.Campaign
