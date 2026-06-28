@@ -43,6 +43,7 @@ import Referrals from '@/pages/Referrals';
 import Reports from '@/pages/Reports';
 import GymProfile from '@/pages/GymProfile';
 import SettingsPage from '@/pages/SettingsPage';
+import AdminDashboard from '@/pages/AdminDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -102,6 +103,7 @@ const AuthenticatedApp = () => {
           <Route path="/reports" element={<Reports />} />
           <Route path="/gym-profile" element={<GymProfile />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Route>
       </Route>
 
