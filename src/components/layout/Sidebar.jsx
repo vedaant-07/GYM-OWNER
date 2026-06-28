@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Zap, ClipboardCheck, Target, CreditCard,
   Crown, Megaphone, Trophy, Dumbbell, Calendar, Wrench, Star, Share2,
   BarChart3, Building2, Settings, ChevronDown, X, Bell, Salad,
-  MessageSquare, Mail, Bot, FlaskConical, BookOpen, Shield
+  MessageSquare, Mail, Bot, FlaskConical, BookOpen, Shield, Smartphone
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -23,6 +23,7 @@ const NAV_GROUPS = [
   {
     id: 'referrals', label: 'SE7EN FIT Referrals', accent: true, items: [
       { label: 'Referred Users', icon: Zap, path: '/referred-users' },
+      { label: 'Download App', icon: Smartphone, path: '/download-app' },
     ]
   },
   {
@@ -178,7 +179,6 @@ export default function Sidebar({ isOpen, onClose }) {
           borderRight: '1px solid hsl(var(--sidebar-border))'
         }}
       >
-        {/* Logo bar */}
         <div
           className="flex items-center justify-between px-4 h-16 flex-shrink-0"
           style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}
@@ -200,14 +200,12 @@ export default function Sidebar({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
           {NAV_GROUPS.map((group) => (
             <NavGroup key={group.id} group={group} onClose={onClose} />
           ))}
         </nav>
 
-        {/* Footer */}
         <div
           className="px-4 py-3 flex-shrink-0"
           style={{ borderTop: '1px solid hsl(var(--sidebar-border))' }}
