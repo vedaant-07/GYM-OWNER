@@ -11,6 +11,14 @@ services:
         value: 22
       - key: VITE_API_BASE_URL
         value: https://se7en-fit-api.onrender.com/api
+      - key: VITE_API_TIMEOUT_MS
+        value: 15000
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_GOOGLE_WEB_CLIENT_ID
+        sync: false
       - key: VITE_ADMIN_DASHBOARD_URL
         value: https://se7enfit-admin.onrender.com/admin
       - key: VITE_APP_PLAY_STORE_URL
