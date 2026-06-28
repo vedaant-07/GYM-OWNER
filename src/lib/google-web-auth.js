@@ -1,4 +1,4 @@
-export const GOOGLE_WEB_CLIENT_ID = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || '10666408411-4t6tm45luqqa1q8la40f8q44r5js1rik.apps.googleusercontent.com';
+export const GOOGLE_WEB_CLIENT_ID = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 let googleScriptPromise = null;
 
@@ -32,11 +32,8 @@ export function loadGoogleIdentityScript() {
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      if (window.google?.accounts?.id) {
-        resolve(window.google);
-      } else {
-        reject(new Error('Google Identity Services loaded but was not available.'));
-      }
+      if (window.google?.accounts?.id) resolve(window.google);
+      else reject(new Error('Google Identity Services loaded but was not available.'));
     };
     script.onerror = () => reject(new Error('Google login script failed to load. Check browser extensions or network blocking.'));
     document.head.appendChild(script);
@@ -49,7 +46,8 @@ export async function renderGoogleSignInButton({ element, onCredential, onError 
   if (!element) return;
 
   if (!GOOGLE_WEB_CLIENT_ID) {
-    onError?.('Google Web Client ID is missing. Add VITE_GOOGLE_WEB_CLIENT_ID in website env.');
+    element.innerHTML = '';
+    onError?.('Google login is not configured yet. Add VITE_GOOGLE_WEB_CLIENT_ID in Render and Google Cloud origins, or use email login.');
     return;
   }
 
