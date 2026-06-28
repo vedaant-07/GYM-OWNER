@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { tokenStore, userStore } from '@/lib/api-client';
 
@@ -8,23 +8,34 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
+  const [isLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings] = useState({ id: 'se7enfit-owner', public_settings: { auth_required: true } });
 
-  useEffect(() => { checkUserAuth(); }, []);
-
-  const checkUserAuth = async () => {
-    setIsLoadingAuth(true);
-    setAuthError(null);
+  const checkUserAuth = useCallback(async ({ background = false } = {}) => {
     const token = tokenStore.get();
     const cachedUser = userStore.get();
 
-    if (cachedUser) {
+    if (cachedUser && token) {
       setUser(cachedUser);
-      setIsAuthenticated(Boolean(token));
+      setIsAuthenticated(true);
+      setAuthError(null);
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
+      if (!background) {
+        base44.auth.me().then((currentUser) => {
+          setUser(currentUser);
+          userStore.set(currentUser);
+        }).catch((error) => {
+          console.warn('SE7EN FIT owner session revalidation failed:', error?.message || error);
+        });
+      }
+      return;
     }
+
+    setIsLoadingAuth(true);
+    setAuthError(null);
 
     if (!token) {
       setUser(null);
@@ -37,6 +48,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      userStore.set(currentUser);
       setIsAuthenticated(true);
     } catch (error) {
       tokenStore.clear();
@@ -48,7 +60,9 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
       setAuthChecked(true);
     }
-  };
+  }, []);
+
+  useEffect(() => { checkUserAuth(); }, [checkUserAuth]);
 
   const applyAuthResult = (result) => {
     if (result?.requires_otp && !result?.access_token) {
@@ -57,8 +71,11 @@ export const AuthProvider = ({ children }) => {
       return result;
     }
     const nextUser = result?.user || userStore.get();
+    if (nextUser) userStore.set(nextUser);
     setUser(nextUser);
     setIsAuthenticated(Boolean(result?.access_token || tokenStore.get()));
+    setIsLoadingAuth(false);
+    setAuthChecked(true);
     setAuthError(null);
     return result;
   };
@@ -71,6 +88,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async (shouldRedirect = true) => {
     await base44.auth.logout().catch(() => null);
+    tokenStore.clear();
+    userStore.clear();
     setUser(null);
     setIsAuthenticated(false);
     setAuthError(null);
