@@ -1,4 +1,14 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://se7en-fit-api.onrender.com/api').replace(/\/$/, '');
+const DEFAULT_API_BASE_URL = 'https://se7en-fit-api.onrender.com/api';
+
+function normalizeApiBaseUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return DEFAULT_API_BASE_URL;
+  if (raw.includes('.supabase.co')) return DEFAULT_API_BASE_URL;
+  const withoutSlash = raw.replace(/\/+$/, '');
+  return withoutSlash.endsWith('/api') ? withoutSlash : `${withoutSlash}/api`;
+}
+
+const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 15000);
 const TOKEN_KEY = 'se7enfit_owner_token';
 const USER_KEY = 'se7enfit_owner_user';
@@ -34,6 +44,10 @@ function normalizeResponsePayload(payload) {
   return payload;
 }
 
+function networkErrorMessage() {
+  return `Could not reach SE7EN FIT backend at ${API_BASE_URL}. Check Render backend deploy and CORS settings.`;
+}
+
 export async function apiRequest(path, options = {}) {
   const token = tokenStore.get();
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -60,6 +74,7 @@ export async function apiRequest(path, options = {}) {
     return normalizeResponsePayload(payload);
   } catch (error) {
     if (error?.name === 'AbortError') throw new ApiError('Server is taking too long to respond. Please try again in a few seconds.', 0, null);
+    if (error instanceof TypeError) throw new ApiError(networkErrorMessage(), 0, null);
     throw error;
   } finally {
     if (timeoutId) window.clearTimeout(timeoutId);
