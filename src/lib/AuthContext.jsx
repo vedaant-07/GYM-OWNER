@@ -13,14 +13,11 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings] = useState({ id: 'se7enfit-owner', public_settings: { auth_required: true } });
 
-  useEffect(() => {
-    checkUserAuth();
-  }, []);
+  useEffect(() => { checkUserAuth(); }, []);
 
   const checkUserAuth = async () => {
     setIsLoadingAuth(true);
     setAuthError(null);
-
     const token = tokenStore.get();
     const cachedUser = userStore.get();
 
@@ -54,31 +51,23 @@ export const AuthProvider = ({ children }) => {
   };
 
   const applyAuthResult = (result) => {
-    const nextUser = result.user || userStore.get();
+    if (result?.requires_otp && !result?.access_token) {
+      setIsAuthenticated(false);
+      setAuthError(null);
+      return result;
+    }
+    const nextUser = result?.user || userStore.get();
     setUser(nextUser);
-    setIsAuthenticated(true);
+    setIsAuthenticated(Boolean(result?.access_token || tokenStore.get()));
     setAuthError(null);
     return result;
   };
 
-  const login = async (email, password) => {
-    const result = await base44.auth.loginViaEmailPassword(email, password);
-    return applyAuthResult(result);
-  };
-
-  const loginWithGoogleCredential = async (idToken) => {
-    const result = await base44.auth.loginWithGoogleCredential(idToken);
-    return applyAuthResult(result);
-  };
-
-  const register = async (payload) => {
-    const result = await base44.auth.register(payload);
-    const nextUser = result.user || userStore.get();
-    setUser(nextUser);
-    setIsAuthenticated(Boolean(tokenStore.get()));
-    setAuthError(null);
-    return result;
-  };
+  const login = async (email, password) => applyAuthResult(await base44.auth.loginViaEmailPassword(email, password));
+  const verifyOtp = async ({ email, token, purpose = 'login' }) => applyAuthResult(await base44.auth.verifyOtp({ email, token, purpose }));
+  const resendOtp = async (email, purpose = 'login') => base44.auth.resendOtp(email, purpose);
+  const loginWithGoogleCredential = async (idToken) => applyAuthResult(await base44.auth.loginWithGoogleCredential(idToken));
+  const register = async (payload) => applyAuthResult(await base44.auth.register(payload));
 
   const logout = async (shouldRedirect = true) => {
     await base44.auth.logout().catch(() => null);
@@ -88,9 +77,7 @@ export const AuthProvider = ({ children }) => {
     if (shouldRedirect) window.location.href = '/login';
   };
 
-  const navigateToLogin = () => {
-    window.location.href = '/login';
-  };
+  const navigateToLogin = () => { window.location.href = '/login'; };
 
   return (
     <AuthContext.Provider value={{
@@ -102,6 +89,8 @@ export const AuthProvider = ({ children }) => {
       appPublicSettings,
       authChecked,
       login,
+      verifyOtp,
+      resendOtp,
       loginWithGoogleCredential,
       register,
       logout,
@@ -115,8 +104,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
