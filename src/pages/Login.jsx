@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { renderGoogleSignInButton } from "@/lib/google-web-auth";
 
 export default function Login() {
+  const navigate = useNavigate();
   const { login, verifyOtp, resendOtp, loginWithGoogleCredential } = useAuth();
   const googleButtonRef = useRef(null);
   const [email, setEmail] = useState("");
@@ -19,6 +20,8 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  const goDashboard = () => navigate("/dashboard", { replace: true });
 
   useEffect(() => {
     let cancelled = false;
@@ -31,7 +34,7 @@ export default function Login() {
         setGoogleLoading(true);
         try {
           await loginWithGoogleCredential(credential);
-          window.location.href = "/dashboard";
+          goDashboard();
         } catch (err) {
           setError(err.message || "Google login failed. Please try again or use email login.");
         } finally {
@@ -50,7 +53,7 @@ export default function Login() {
     try {
       if (otpStep) {
         await verifyOtp({ email: email.trim(), token: otp.trim(), purpose: 'login' });
-        window.location.href = "/dashboard";
+        goDashboard();
         return;
       }
       const result = await login(email.trim(), password);
@@ -59,7 +62,7 @@ export default function Login() {
         setMessage(result.message || "Verification code sent to your email.");
         return;
       }
-      window.location.href = "/dashboard";
+      goDashboard();
     } catch (err) {
       setError(err.message || "Invalid owner email or password");
     } finally {
