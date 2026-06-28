@@ -1,194 +1,231 @@
-import { supabase } from '@/lib/supabaseClient'
-import { tokenStore, userStore } from '@/lib/api-client'
+import { apiRequest, tokenStore, userStore } from '@/lib/api-client'
 
-const entityTables = {
-  GymProfile: 'gyms',
-  GymMember: 'members',
-  Member: 'members',
-  Profile: 'profiles',
-  EmailMessage: 'email_messages',
-}
-
-const primaryKeys = {
-  gyms: 'gym_id',
-  members: 'member_id',
-  profiles: 'user_id',
-  email_messages: 'id',
-}
-
-const ownerColumns = {
-  gyms: 'owner_profile_id',
-  email_messages: 'owner_profile_id',
-}
-
-const singletonEntities = new Set(['GymProfile', 'Profile'])
-
-function toTableName(entityName) {
-  if (entityTables[entityName]) return entityTables[entityName]
-  const snake = String(entityName)
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-    .replace(/\s+/g, '_')
-    .toLowerCase()
-  return snake.endsWith('s') ? snake : `${snake}s`
-}
-
-function authRedirect(path) {
-  return `${window.location.origin}${path}`
-}
-
-async function getUser() {
-  const { data, error } = await supabase.auth.getUser()
-  if (error) throw error
-  return data?.user || null
-}
-
-function isMissingTable(error) {
-  return ['42P01', 'PGRST106', 'PGRST116', 'PGRST205'].includes(error?.code)
-}
-
-function normalizeRow(entityName, row) {
-  if (!row) return row
-  const table = toTableName(entityName)
-  const pk = primaryKeys[table] || 'id'
-  const normalized = { ...row, id: row.id || row[pk] }
-
-  if (entityName === 'GymProfile') {
-    normalized.gym_name = row.gym_name || row.name || ''
-    normalized.mobile = row.mobile || row.phone || ''
-  }
-
-  if (entityName === 'EmailMessage') {
-    normalized.to = row.to || row.recipient_email || ''
-    normalized.createdAt = row.createdAt || row.created_at
-    normalized.message = row.message || row.body || ''
-  }
-
-  return normalized
-}
-
-function normalizePayload(entityName, payload = {}, user) {
-  const table = toTableName(entityName)
-  const next = { ...payload }
-  delete next.id
-
-  if (table === 'gyms') {
-    next.owner_profile_id = user?.id
-    next.name = next.name || next.gym_name || ''
-    next.phone = next.phone || next.mobile || ''
-    delete next.gym_name
-    delete next.mobile
-  }
-
-  if (table === 'profiles') {
-    next.user_id = user?.id
-    next.email = next.email || user?.email || null
-    next.role = next.role || 'gym_owner'
-  }
-
-  if (table === 'email_messages') {
-    next.owner_profile_id = user?.id
-    next.recipient_email = next.recipient_email || next.to || ''
-    next.message = next.message || next.body || ''
-    next.status = next.status || 'queued'
-    delete next.to
-    delete next.body
-  }
-
-  return next
-}
-
-function createEntityAdapter(entityName) {
-  const table = toTableName(entityName)
-  const primaryKey = primaryKeys[table] || 'id'
-  const ownerColumn = ownerColumns[table]
-  const singleton = singletonEntities.has(entityName)
-
-  function scopedQuery(user) {
-    let query = supabase.from(table).select('*')
-    if (table === 'profiles') query = query.eq('user_id', user.id)
-    if (ownerColumn) query = query.eq(ownerColumn, user.id)
-    return query
-  }
-
+function normalizeGym(row = {}, owner = {}) {
   return {
+    ...row,
+    id: row.gym_id || row.id,
+    gym_id: row.gym_id || row.id,
+    name: row.name || row.gym_name || '',
+    gym_name: row.name || row.gym_name || '',
+    mobile: row.phone || row.mobile || '',
+    phone: row.phone || row.mobile || '',
+    onboarding_completed: Boolean(owner?.onboarding_complete || row.onboarding_complete || row.status),
+    onboarding_complete: Boolean(owner?.onboarding_complete || row.onboarding_complete || row.status),
+    referral_code: row.referral_code || owner?.referral_code || '',
+  }
+}
+
+function normalizeMember(row = {}) {
+  const profile = row.profile || row.profiles || row.user_profile || {}
+  return {
+    ...row,
+    id: row.membership_id || row.member_id || row.id,
+    membership_id: row.membership_id,
+    user_id: row.user_id,
+    name: row.name || profile.full_name || profile.name || row.user_name || 'SE7EN FIT User',
+    user_name: row.user_name || profile.full_name || profile.name || row.name || 'SE7EN FIT User',
+    phone: row.phone || profile.phone || profile.mobile || '',
+    email: row.email || profile.email || '',
+    membership_plan: row.membership_plan || row.plan_code || row.plan || 'SE7EN FIT',
+    membership_status: row.membership_status || row.status || 'active',
+    conversion_status: row.conversion_status || (row.status === 'active' ? 'converted' : 'pending'),
+    joined_date: row.joined_date || row.joined_at?.slice?.(0, 10) || row.created_at?.slice?.(0, 10),
+    gym_linked_date: row.gym_linked_date || row.approved_at?.slice?.(0, 10),
+    source: row.source || 'se7en_fit',
+    referral_source: row.referral_source || row.referred_by_code || 'SE7EN FIT App',
+    referred_by: row.referred_by || row.referred_by_code || '',
+  }
+}
+
+function normalizeLead(row = {}) {
+  return {
+    ...row,
+    id: row.lead_id || row.id,
+    name: row.name || row.user_name || row.full_name || 'Lead',
+    status: row.status || 'new',
+  }
+}
+
+function normalizeAttendance(row = {}) {
+  return {
+    ...row,
+    id: row.log_id || row.id,
+    check_in_time: row.check_in_time || row.check_in_at,
+    check_out_time: row.check_out_time || row.check_out_at,
+    member_name: row.member_name || row.user_name || row.name || 'Member',
+  }
+}
+
+function normalizeEquipment(row = {}) {
+  return { ...row, id: row.equipment_id || row.id }
+}
+
+function normalizeAd(row = {}) {
+  return { ...row, id: row.ad_id || row.id }
+}
+
+function productionError(entityName) {
+  return new Error(`${entityName} is not connected to a production API route yet.`)
+}
+
+const entityAdapters = {
+  GymProfile: {
     async list() {
-      const user = await getUser()
-      if (!user) return []
-      const { data, error } = await scopedQuery(user)
-      if (error) {
-        if (isMissingTable(error)) return []
-        throw error
-      }
-      return (data || []).map((row) => normalizeRow(entityName, row))
+      const result = await apiRequest('/gym-owners/me')
+      const gyms = result?.gyms || (result?.gym ? [result.gym] : [])
+      return gyms.map((gym) => normalizeGym(gym, result?.owner || {}))
     },
-
-    async filter(params = {}) {
-      const user = await getUser()
-      if (!user) return []
-      let query = scopedQuery(user)
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') query = query.eq(key, value)
-      })
-      const { data, error } = await query
-      if (error) {
-        if (isMissingTable(error)) return []
-        throw error
-      }
-      return (data || []).map((row) => normalizeRow(entityName, row))
+    async get() {
+      const list = await this.list()
+      return list[0] || null
     },
-
-    async get(id) {
-      const user = await getUser()
-      if (!user) return null
-      let query = scopedQuery(user)
-      if (!singleton && id) query = query.eq(primaryKey, id)
-      const { data, error } = await query.maybeSingle()
-      if (error) {
-        if (isMissingTable(error)) return null
-        throw error
-      }
-      return normalizeRow(entityName, data)
-    },
-
     async create(payload = {}) {
-      const user = await getUser()
-      if (!user) throw new Error('Authentication required')
-      const body = normalizePayload(entityName, payload, user)
-      const { data, error } = await supabase.from(table).insert(body).select('*').single()
-      if (error) throw error
-      return normalizeRow(entityName, data)
+      const result = await apiRequest('/gym-owners/onboarding', { method: 'POST', body: payload })
+      return normalizeGym(result?.gym || result, result?.owner || {})
     },
+    async update(_id, payload = {}) {
+      const result = await apiRequest('/gym-owners/me', { method: 'PUT', body: payload })
+      return normalizeGym(result)
+    },
+  },
 
+  GymMember: {
+    async list() {
+      const rows = await apiRequest('/gym-owner/members')
+      return (Array.isArray(rows) ? rows : []).map(normalizeMember)
+    },
+    async filter(params = {}) {
+      const rows = await this.list()
+      return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value))
+    },
     async update(id, payload = {}) {
-      const user = await getUser()
-      if (!user) throw new Error('Authentication required')
-      const body = normalizePayload(entityName, payload, user)
-      let query = supabase.from(table).update(body).select('*')
-      if (singleton) {
-        if (table === 'profiles') query = query.eq('user_id', user.id)
-        if (ownerColumn) query = query.eq(ownerColumn, user.id)
-      } else {
-        query = query.eq(primaryKey, id)
-      }
-      const { data, error } = await query.maybeSingle()
-      if (error) throw error
-      return normalizeRow(entityName, data)
+      const result = await apiRequest(`/gym-owner/members/${id}`, { method: 'PATCH', body: payload })
+      return normalizeMember(result)
     },
-
+    async create() {
+      throw productionError('Manual gym members')
+    },
     async delete(id) {
-      const user = await getUser()
-      if (!user) throw new Error('Authentication required')
-      const { error } = await supabase.from(table).delete().eq(primaryKey, id)
-      if (error) throw error
+      await apiRequest(`/gym-owner/members/${id}`, { method: 'PATCH', body: { status: 'removed' } })
       return { success: true }
     },
-  }
+  },
+
+  SE7ENFITReferredUser: {
+    async list() {
+      const rows = await apiRequest('/gym-owner/members')
+      return (Array.isArray(rows) ? rows : []).map(normalizeMember)
+    },
+    async filter(params = {}) {
+      const rows = await this.list()
+      return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value))
+    },
+    async update(id, payload = {}) {
+      const status = payload.membership_status || (payload.conversion_status === 'converted' ? 'active' : payload.status)
+      const result = await apiRequest(`/gym-owner/members/${id}`, { method: 'PATCH', body: { ...payload, status } })
+      return normalizeMember(result)
+    },
+    async create(payload = {}) {
+      const result = await apiRequest('/gym-leads', { method: 'POST', body: { ...payload, name: payload.user_name || payload.name, source: 'gym_owner' } })
+      return normalizeLead(result)
+    },
+  },
+
+  GymLead: {
+    async list() {
+      const rows = await apiRequest('/gym-owner/leads')
+      return (Array.isArray(rows) ? rows : []).map(normalizeLead)
+    },
+    async filter(params = {}) {
+      const rows = await this.list()
+      return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value))
+    },
+    async create(payload = {}) {
+      const result = await apiRequest('/gym-leads', { method: 'POST', body: { ...payload, source: 'gym_owner' } })
+      return normalizeLead(result)
+    },
+    async update(id, payload = {}) {
+      const result = await apiRequest(`/gym-owner/leads/${id}`, { method: 'PATCH', body: payload })
+      return normalizeLead(result)
+    },
+  },
+
+  GymAttendance: {
+    async list() {
+      const rows = await apiRequest('/gym-owner/attendance')
+      return (Array.isArray(rows) ? rows : []).map(normalizeAttendance)
+    },
+    async filter(params = {}) {
+      const rows = await this.list()
+      return rows.filter((row) => Object.entries(params).every(([key, value]) => !value || row[key] === value))
+    },
+  },
+
+  GymEquipment: {
+    async list() {
+      const rows = await apiRequest('/gym-owner/equipment')
+      return (Array.isArray(rows) ? rows : []).map(normalizeEquipment)
+    },
+    async create(payload = {}) {
+      const result = await apiRequest('/gym-owner/equipment', { method: 'POST', body: payload })
+      return normalizeEquipment(result)
+    },
+    async update(id, payload = {}) {
+      const result = await apiRequest(`/gym-owner/equipment/${id}`, { method: 'PATCH', body: payload })
+      return normalizeEquipment(result)
+    },
+    async delete(id) {
+      await apiRequest(`/gym-owner/equipment/${id}`, { method: 'DELETE' })
+      return { success: true }
+    },
+  },
+
+  Campaign: {
+    async list() {
+      const rows = await apiRequest('/gym-owner/advertisements')
+      return (Array.isArray(rows) ? rows : []).map(normalizeAd)
+    },
+    async create(payload = {}) {
+      const result = await apiRequest('/gym-owner/advertisements', { method: 'POST', body: payload })
+      return normalizeAd(result)
+    },
+    async update(id, payload = {}) {
+      const result = await apiRequest(`/gym-owner/advertisements/${id}`, { method: 'PATCH', body: payload })
+      return normalizeAd(result)
+    },
+    async delete(id) {
+      await apiRequest(`/gym-owner/advertisements/${id}`, { method: 'DELETE' })
+      return { success: true }
+    },
+  },
+
+  Advertisement: null,
+  GymPlan: null,
+  SupportTicket: {
+    async list() {
+      const rows = await apiRequest('/support/tickets/me')
+      return Array.isArray(rows) ? rows : []
+    },
+    async create(payload = {}) {
+      return apiRequest('/support/tickets', { method: 'POST', body: { ...payload, source: 'gym_owner' } })
+    },
+  },
 }
+entityAdapters.Advertisement = entityAdapters.Campaign
 
 const entities = new Proxy({}, {
   get(target, entityName) {
     if (typeof entityName !== 'string') return target[entityName]
-    if (!target[entityName]) target[entityName] = createEntityAdapter(entityName)
+    if (!target[entityName]) {
+      target[entityName] = entityAdapters[entityName] || {
+        async list() { throw productionError(entityName) },
+        async filter() { throw productionError(entityName) },
+        async get() { throw productionError(entityName) },
+        async create() { throw productionError(entityName) },
+        async update() { throw productionError(entityName) },
+        async delete() { throw productionError(entityName) },
+      }
+    }
     return target[entityName]
   },
 })
@@ -196,112 +233,71 @@ const entities = new Proxy({}, {
 export const base44 = {
   auth: {
     async loginViaEmailPassword(email, password) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        const message = String(error.message || '')
-        if (message.toLowerCase().includes('email not confirmed')) {
-          await supabase.auth.resend({ type: 'signup', email }).catch(() => null)
-          throw new Error('Email is not verified. We sent a new verification email. Please verify and try again.')
-        }
-        throw error
-      }
-      tokenStore.set(data.session?.access_token)
-      userStore.set(data.user)
-      return { access_token: data.session?.access_token, token: data.session?.access_token, user: data.user }
+      const result = await apiRequest('/auth/login', { method: 'POST', body: { email, password, role: 'gym_owner' } })
+      if (result?.access_token) tokenStore.set(result.access_token)
+      if (result?.user) userStore.set(result.user)
+      return result
     },
-
     async register(payload = {}) {
-      const email = payload.email
-      const password = payload.password
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: authRedirect('/login'),
-          data: {
-            role: 'gym_owner',
-            full_name: payload.name || payload.ownerName || email?.split('@')[0] || 'Gym Owner',
-            phone: payload.phone || payload.mobile || null,
-            gym_name: payload.gymName || null,
-          },
+      const result = await apiRequest('/auth/register', {
+        method: 'POST',
+        body: {
+          email: payload.email,
+          password: payload.password,
+          role: 'gym_owner',
+          owner_name: payload.ownerName || payload.name,
+          full_name: payload.ownerName || payload.name,
+          phone: payload.phone || payload.mobile,
+          gym_name: payload.gymName,
         },
       })
-      if (error) throw error
-      tokenStore.set(data.session?.access_token)
-      userStore.set(data.user)
-      return {
-        access_token: data.session?.access_token,
-        token: data.session?.access_token,
-        user: data.user,
-        requires_email_verification: Boolean(data.user && !data.session),
-      }
+      if (result?.access_token) tokenStore.set(result.access_token)
+      if (result?.user) userStore.set(result.user)
+      return result
     },
-
-    async resetPasswordRequest(email) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: authRedirect('/reset-password'),
-      })
-      if (error) throw error
-      return { success: true }
+    async verifyOtp({ email, token, purpose = 'login' } = {}) {
+      const result = await apiRequest('/auth/verify-otp', { method: 'POST', body: { email, otp_code: token, purpose } })
+      if (result?.access_token) tokenStore.set(result.access_token)
+      if (result?.user) userStore.set(result.user)
+      return result
     },
-
-    async resetPassword({ newPassword }) {
-      const { data: sessionData } = await supabase.auth.getSession()
-      if (!sessionData?.session) throw new Error('Reset link expired or invalid. Please request a new password reset email.')
-      const { error } = await supabase.auth.updateUser({ password: newPassword })
-      if (error) throw error
-      return { success: true }
+    async resendOtp(email, purpose = 'login') {
+      return apiRequest('/auth/resend-otp', { method: 'POST', body: { email, purpose } })
     },
-
-    async loginWithGoogleCredential() {
-      throw new Error('Google login must be enabled in Supabase Auth providers before use.')
+    async loginWithGoogleCredential(idToken) {
+      const result = await apiRequest('/auth/google', { method: 'POST', body: { idToken, role: 'gym_owner' } })
+      if (result?.access_token) tokenStore.set(result.access_token)
+      if (result?.user) userStore.set(result.user)
+      return result
     },
-
-    async verifyOtp({ email, token, type = 'email' } = {}) {
-      if (!email || !token) return { access_token: tokenStore.get() }
-      const { data, error } = await supabase.auth.verifyOtp({ email, token, type })
-      if (error) throw error
-      tokenStore.set(data.session?.access_token)
-      userStore.set(data.user)
-      return { access_token: data.session?.access_token, token: data.session?.access_token, user: data.user }
-    },
-
-    async resendOtp(email) {
-      if (!email) return { success: true }
-      const { error } = await supabase.auth.resend({ type: 'signup', email })
-      if (error) throw error
-      return { success: true }
-    },
-
     async me() {
-      const user = await getUser()
-      if (!user) throw new Error('Authentication required')
-      const { data } = await supabase.auth.getSession()
-      tokenStore.set(data.session?.access_token)
+      const result = await apiRequest('/auth/me')
+      const user = result?.user || result
       userStore.set(user)
       return user
     },
-
     async logout(redirectTo) {
-      await supabase.auth.signOut()
+      await apiRequest('/auth/logout', { method: 'POST' }).catch(() => null)
       tokenStore.clear()
       userStore.clear()
       if (redirectTo) window.location.href = redirectTo
     },
-
-    setToken(token) {
-      tokenStore.set(token)
-    },
-
-    async loginWithProvider(provider) {
-      const { data, error } = await supabase.auth.signInWithOAuth({ provider })
-      if (error) throw error
-      return data
-    },
-
-    redirectToLogin() {
-      window.location.href = '/login'
-    },
+    setToken(token) { tokenStore.set(token) },
+    async loginWithProvider() { throw new Error('Use Google credential login with the production backend.') },
+    async resetPasswordRequest() { throw new Error('Password reset endpoint is not connected yet.') },
+    async resetPassword() { throw new Error('Password reset endpoint is not connected yet.') },
+    redirectToLogin() { window.location.href = '/login' },
   },
   entities,
+  integrations: {
+    Core: {
+      async UploadFile({ file, purpose = 'gym' }) {
+        const form = new FormData()
+        form.append('file', file)
+        form.append('purpose', purpose)
+        const response = await apiRequest('/uploads/media', { method: 'POST', body: form })
+        return { url: response?.public_url || response?.asset?.public_url, asset: response?.asset || response }
+      },
+    },
+  },
 }
