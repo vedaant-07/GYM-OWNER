@@ -13,6 +13,10 @@ services:
         value: https://se7en-fit-api.onrender.com/api
       - key: VITE_ADMIN_DASHBOARD_URL
         value: https://se7enfit-admin.onrender.com/admin
+      - key: VITE_APP_PLAY_STORE_URL
+        sync: false
+      - key: VITE_APP_STORE_URL
+        sync: false
     routes:
       - type: rewrite
         source: "/*"
