@@ -1,4 +1,5 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://se7en-fit-api.onrender.com/api').replace(/\/$/, '');
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 15000);
 const TOKEN_KEY = 'se7enfit_owner_token';
 const USER_KEY = 'se7enfit_owner_user';
 
@@ -36,23 +37,33 @@ function normalizeResponsePayload(payload) {
 export async function apiRequest(path, options = {}) {
   const token = tokenStore.get();
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller ? window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
   const headers = {
     Accept: 'application/json',
     ...(!isFormData && options.body ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-    body: options.body && !isFormData && typeof options.body !== 'string' ? JSON.stringify(options.body) : options.body,
-  });
-  const contentType = response.headers.get('content-type') || '';
-  const text = await response.text();
-  if (!contentType.includes('application/json')) throw new ApiError('Server returned an invalid response.', response.status, text.slice(0, 300));
-  const payload = text ? JSON.parse(text) : null;
-  if (!response.ok || payload?.success === false) throw new ApiError(payload?.message || payload?.error || 'Request failed', response.status, payload);
-  return normalizeResponsePayload(payload);
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller?.signal || options.signal,
+      body: options.body && !isFormData && typeof options.body !== 'string' ? JSON.stringify(options.body) : options.body,
+    });
+    const contentType = response.headers.get('content-type') || '';
+    const text = await response.text();
+    if (!contentType.includes('application/json')) throw new ApiError('Server returned an invalid response.', response.status, text.slice(0, 300));
+    const payload = text ? JSON.parse(text) : null;
+    if (!response.ok || payload?.success === false) throw new ApiError(payload?.message || payload?.error || 'Request failed', response.status, payload);
+    return normalizeResponsePayload(payload);
+  } catch (error) {
+    if (error?.name === 'AbortError') throw new ApiError('Server is taking too long to respond. Please try again in a few seconds.', 0, null);
+    throw error;
+  } finally {
+    if (timeoutId) window.clearTimeout(timeoutId);
+  }
 }
 
 export async function safeList(paths) {
