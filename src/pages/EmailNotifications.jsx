@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { supabase } from '@/lib/supabaseClient';
+import { apiRequest } from '@/lib/api-client';
 import { Mail, Send, AlertTriangle, Check, Clock, Eye } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import StatCard from '@/components/ui/StatCard';
@@ -28,7 +27,7 @@ const EMAIL_TEMPLATES = [
 ];
 
 const emptyForm = { recipient_name: '', recipient_email: '', subject: '', body: '', template_name: '' };
-const providerStatus = { configured: true, from: 'Mailjet via Supabase Edge Function' };
+const providerStatus = { configured: true, from: 'Mailjet via Render Backend' };
 
 export default function EmailNotifications() {
   const [emails, setEmails] = useState([]);
@@ -43,7 +42,7 @@ export default function EmailNotifications() {
   const load = async () => {
     setLoading(true);
     try {
-      const emailList = await base44.entities.EmailMessage.list();
+      const emailList = await apiRequest('/gym-owner/emails');
       setEmails(Array.isArray(emailList) ? emailList : []);
     } catch (e) {
       console.error(e);
@@ -59,7 +58,8 @@ export default function EmailNotifications() {
     }
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-email', {
+      const data = await apiRequest('/gym-owner/email/send', {
+        method: 'POST',
         body: {
           recipient_email: form.recipient_email.trim(),
           recipient_name: form.recipient_name.trim() || undefined,
@@ -69,12 +69,9 @@ export default function EmailNotifications() {
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
       toast(data?.status === 'sent'
         ? { title: 'Email sent', description: 'Message was sent through Mailjet.' }
-        : { title: 'Email saved', description: 'Message was saved in Supabase email history.' });
+        : { title: 'Email saved', description: 'Message was saved in email history.' });
       setShowSend(false);
       setForm(emptyForm);
       load();
@@ -107,7 +104,7 @@ export default function EmailNotifications() {
         {providerStatus.configured ? <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} /> : <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: NEON_GREEN }} />}
         <div>
           <p className="text-sm font-semibold" style={{ color: NEON_GREEN }}>Mailjet Email Setup Active</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Signup verification and password reset use Supabase Auth SMTP. Custom emails send through the Supabase Mailjet Edge Function.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Signup verification and password reset use backend auth. Custom emails send through the Render backend Mailjet API.</p>
           <Button size="sm" variant="outline" className="mt-2 text-xs" style={{ borderColor: NEON_BORDER, color: NEON_GREEN }} disabled>Mailjet connected</Button>
         </div>
       </div>
