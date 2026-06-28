@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { renderGoogleSignInButton } from "@/lib/google-web-auth";
 import { isPhone10, normalizePhone10 } from "@/lib/phone";
 
 export default function Register() {
+  const navigate = useNavigate();
   const { register, verifyOtp, resendOtp, loginWithGoogleCredential } = useAuth();
   const googleButtonRef = useRef(null);
   const errorTimerRef = useRef(null);
@@ -21,6 +22,7 @@ export default function Register() {
   const [otp, setOtp] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
 
+  const goOnboarding = () => navigate("/onboarding", { replace: true });
   const showError = (messageText) => {
     setError(messageText);
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
@@ -38,7 +40,7 @@ export default function Register() {
         setGoogleLoading(true);
         try {
           await loginWithGoogleCredential(credential);
-          window.location.href = "/onboarding";
+          goOnboarding();
         } catch (err) {
           showError(err.message || "Google registration failed. Please try again or use email registration.");
         } finally {
@@ -62,7 +64,7 @@ export default function Register() {
       setLoading(true);
       try {
         await verifyOtp({ email: pendingEmail, token: otp.trim(), purpose: 'register' });
-        window.location.href = "/onboarding";
+        goOnboarding();
       } catch (err) {
         showError(err.message || "OTP verification failed");
       } finally {
@@ -94,7 +96,7 @@ export default function Register() {
         setMessage(result.message || "Verification code sent to your email.");
         return;
       }
-      window.location.href = "/onboarding";
+      goOnboarding();
     } catch (err) {
       showError(err.message || "Registration failed");
     } finally {
