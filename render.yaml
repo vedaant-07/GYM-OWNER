@@ -11,6 +11,8 @@ services:
         value: 22
       - key: VITE_API_BASE_URL
         value: https://se7enfit-original.onrender.com
+      - key: VITE_ADMIN_DASHBOARD_URL
+        value: https://se7enfit-admin.onrender.com/admin
       - key: VITE_SUPABASE_URL
         value: https://kgzgwapaxgjhmhbphltl.supabase.co
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
