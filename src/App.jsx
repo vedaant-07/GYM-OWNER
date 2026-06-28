@@ -13,6 +13,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import DownloadApp from '@/pages/DownloadApp';
 
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import LandingPage from '@/pages/LandingPage';
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/download-app" element={<DownloadApp />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
