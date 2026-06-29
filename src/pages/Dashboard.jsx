@@ -1,113 +1,138 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
-import StatCard from '@/components/ui/StatCard';
 import SkeletonCard from '@/components/ui/SkeletonCard';
 import {
-  Users, UserCheck, UserPlus, ClipboardCheck, DollarSign, AlertCircle,
-  Clock, Zap, TrendingUp, Megaphone, Wrench, Star, Target,
-  Download, Dumbbell, MessageSquare, Mail
+  Bell,
+  Building2,
+  CalendarCheck,
+  CreditCard,
+  Download,
+  Dumbbell,
+  Gift,
+  IndianRupee,
+  MessageSquare,
+  QrCode,
+  Settings,
+  Share2,
+  Star,
+  Target,
+  Trophy,
+  UserCheck,
+  UserPlus,
+  Users,
+  Wrench,
 } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 
 const NEON_GREEN = '#20c55d';
+const money = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
+const todayIso = () => new Date().toISOString().split('T')[0];
 
-const mockRevenue = [
-  { month: 'Jan', revenue: 45000 }, { month: 'Feb', revenue: 52000 }, { month: 'Mar', revenue: 48000 },
-  { month: 'Apr', revenue: 61000 }, { month: 'May', revenue: 55000 }, { month: 'Jun', revenue: 67000 }
-];
+const safeList = async (entity) => {
+  try { return await entity.list(); } catch { return []; }
+};
 
-const mockAttendance = [
-  { day: 'Mon', count: 45 }, { day: 'Tue', count: 52 }, { day: 'Wed', count: 49 },
-  { day: 'Thu', count: 38 }, { day: 'Fri', count: 55 }, { day: 'Sat', count: 62 }, { day: 'Sun', count: 30 }
-];
+const getStatus = (row, fallback = 'active') => String(row?.status || fallback).toLowerCase();
+const firstLetter = (value = 'S') => String(value || 'S').trim().slice(0, 1).toUpperCase();
 
-const ChartCard = ({ title, children }) => (
-  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5">
-    <h3 className="text-sm font-display font-semibold text-foreground mb-4">{title}</h3>
-    {children}
-  </motion.div>
-);
+function BigMetric({ icon: Icon, label, value, sub, tone = 'text-primary', to }) {
+  const content = (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="group h-full rounded-[26px] border border-border bg-[#101010] p-5 transition-all hover:border-primary/40 hover:bg-primary/5">
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
+        <Icon className="h-7 w-7" style={{ color: NEON_GREEN }} />
+      </div>
+      <p className={`font-display text-4xl font-black tracking-tight ${tone}`}>{value}</p>
+      <p className="mt-2 text-base font-semibold text-foreground">{label}</p>
+      {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
+    </motion.div>
+  );
+  return to ? <Link to={to}>{content}</Link> : content;
+}
 
-const QuickAction = ({ icon: Icon, label, to }) => (
-  <Link
-    to={to}
-    className="group flex min-h-[104px] flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-white/[0.025] p-4 text-center transition-all hover:-translate-y-1 hover:border-primary/45 hover:bg-primary/10 hover:shadow-[0_0_24px_rgba(32,197,93,0.12)]"
-  >
-    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 transition-all group-hover:scale-105 group-hover:border-primary/45 group-hover:neon-glow">
-      <Icon className="h-6 w-6" style={{ color: NEON_GREEN }} />
+function FeatureTile({ icon: Icon, label, to, sub }) {
+  return (
+    <Link to={to} className="group flex min-h-[118px] flex-col items-center justify-center gap-3 rounded-[24px] border border-border bg-[#101010] p-3 text-center transition-all hover:-translate-y-1 hover:border-primary/45 hover:bg-primary/10">
+      <div className="flex h-13 w-13 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 group-hover:shadow-[0_0_22px_rgba(32,197,93,0.18)]">
+        <Icon className="h-6 w-6" style={{ color: NEON_GREEN }} />
+      </div>
+      <div>
+        <p className="text-sm font-black leading-tight text-foreground group-hover:text-primary">{label}</p>
+        {sub && <p className="mt-1 text-[10px] text-muted-foreground">{sub}</p>}
+      </div>
+    </Link>
+  );
+}
+
+function MemberRow({ member }) {
+  const name = member.name || member.full_name || member.email || 'Gym Member';
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-white/[0.025] p-3">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-lg font-black text-primary">{firstLetter(name)}</div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-bold text-foreground">{name}</p>
+        <p className="truncate text-xs text-muted-foreground">{member.email || member.phone || member.membership_type || 'Active member'}</p>
+      </div>
+      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${getStatus(member) === 'active' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>{member.status || 'active'}</span>
     </div>
-    <span className="text-sm font-semibold leading-tight text-foreground group-hover:text-primary">{label}</span>
-  </Link>
-);
+  );
+}
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({});
+  const [data, setData] = useState({ members: [], referred: [], payments: [], leads: [], attendance: [], campaigns: [], equipment: [], reviews: [], workouts: [], diets: [], whatsapp: [], emails: [], profiles: [] });
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  useEffect(() => { loadStats(); }, []);
 
   const loadStats = async () => {
-    try {
-      const [members, referred, payments, leads, attendance, campaigns, equipment, reviews, assignedWorkouts, assignedDiets, whatsapp, emails] = await Promise.all([
-        base44.entities.GymMember.list().catch(() => []),
-        base44.entities.SE7ENFITReferredUser.list().catch(() => []),
-        base44.entities.Payment.list().catch(() => []),
-        base44.entities.Lead.list().catch(() => []),
-        base44.entities.AttendanceRecord.list().catch(() => []),
-        base44.entities.Campaign.list().catch(() => []),
-        base44.entities.Equipment.list().catch(() => []),
-        base44.entities.Review.list().catch(() => []),
-        base44.entities.AssignedWorkoutPlan.list().catch(() => []),
-        base44.entities.AssignedDietPlan.list().catch(() => []),
-        base44.entities.WhatsAppMessage.list().catch(() => []),
-        base44.entities.EmailMessage.list().catch(() => [])
-      ]);
-
-      const activeMembers = members.filter(m => m.status === 'active');
-      const today = new Date().toISOString().split('T')[0];
-      const todayAttendance = attendance.filter(a => a.date === today);
-      const duePayments = payments.filter(p => p.status === 'due' || p.status === 'overdue');
-      const totalRevenue = payments.filter(p => p.status === 'paid').reduce((s, p) => s + (p.amount || 0), 0);
-      const expiringMembers = members.filter(m => {
-        if (!m.renewal_date) return false;
-        const renewal = new Date(m.renewal_date);
-        const week = new Date(); week.setDate(week.getDate() + 7);
-        return renewal <= week && renewal >= new Date();
-      });
-      const convertedLeads = leads.filter(l => l.status === 'converted');
-      const activeCampaigns = campaigns.filter(c => c.status === 'active');
-      const eqIssues = equipment.filter(e => e.status === 'needs_repair' || e.status === 'out_of_order');
-      const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length).toFixed(1) : '—';
-      const thisMonth = new Date().getMonth();
-      const newThisMonth = members.filter(m => m.join_date && new Date(m.join_date).getMonth() === thisMonth);
-
-      setStats({
-        totalMembers: members.length,
-        activeMembers: activeMembers.length,
-        newThisMonth: newThisMonth.length,
-        todayAttendance: todayAttendance.length,
-        revenue: totalRevenue,
-        duePayments: duePayments.length,
-        expiringMemberships: expiringMembers.length,
-        referredUsers: referred.length,
-        leadConversion: leads.length > 0 ? Math.round((convertedLeads.length / leads.length) * 100) : 0,
-        activeCampaigns: activeCampaigns.length,
-        eqIssues: eqIssues.length,
-        avgRating,
-        activeWorkouts: (assignedWorkouts || []).filter(w => w.status === 'active').length,
-        activeDiets: (assignedDiets || []).filter(d => d.status === 'active').length,
-        whatsappSent: (whatsapp || []).length,
-        emailsSent: (emails || []).length,
-      });
-    } catch (e) {
-      console.error(e);
-    }
+    const [members, referred, payments, leads, attendance, campaigns, equipment, reviews, workouts, diets, whatsapp, emails, profiles] = await Promise.all([
+      safeList(base44.entities.GymMember),
+      safeList(base44.entities.SE7ENFITReferredUser),
+      safeList(base44.entities.Payment),
+      safeList(base44.entities.Lead),
+      safeList(base44.entities.AttendanceRecord),
+      safeList(base44.entities.Campaign),
+      safeList(base44.entities.Equipment),
+      safeList(base44.entities.Review),
+      safeList(base44.entities.AssignedWorkoutPlan),
+      safeList(base44.entities.AssignedDietPlan),
+      safeList(base44.entities.WhatsAppMessage),
+      safeList(base44.entities.EmailMessage),
+      safeList(base44.entities.GymProfile),
+    ]);
+    setData({ members, referred, payments, leads, attendance, campaigns, equipment, reviews, workouts, diets, whatsapp, emails, profiles });
     setLoading(false);
   };
+
+  const stats = useMemo(() => {
+    const activeMembers = data.members.filter((m) => getStatus(m) === 'active');
+    const pendingMembers = data.members.filter((m) => getStatus(m, '') === 'pending');
+    const today = todayIso();
+    const todayAttendance = data.attendance.filter((a) => a.date === today || String(a.created_date || '').startsWith(today));
+    const paidRevenue = data.payments.filter((p) => getStatus(p, '') === 'paid').reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const duePayments = data.payments.filter((p) => ['due', 'overdue', 'pending'].includes(getStatus(p, '')));
+    const newLeads = data.leads.filter((l) => getStatus(l, 'new') === 'new');
+    const convertedLeads = data.leads.filter((l) => getStatus(l, '') === 'converted');
+    const avgRating = data.reviews.length ? (data.reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / data.reviews.length).toFixed(1) : '—';
+    return {
+      activeMembers: activeMembers.length,
+      totalMembers: data.members.length,
+      pendingMembers: pendingMembers.length,
+      todayAttendance: todayAttendance.length,
+      revenue: paidRevenue,
+      duePayments: duePayments.length,
+      newLeads: newLeads.length,
+      leadConversion: data.leads.length ? Math.round((convertedLeads.length / data.leads.length) * 100) : 0,
+      activeCampaigns: data.campaigns.filter((c) => getStatus(c) === 'active').length,
+      equipmentIssues: data.equipment.filter((e) => ['needs_repair', 'out_of_order'].includes(getStatus(e, ''))).length,
+      avgRating,
+      activeWorkouts: data.workouts.filter((w) => getStatus(w) === 'active').length,
+      activeDiets: data.diets.filter((d) => getStatus(d) === 'active').length,
+    };
+  }, [data]);
+
+  const gym = data.profiles[0] || {};
+  const recentMembers = data.members.slice(0, 5);
 
   if (loading) {
     return (
@@ -120,91 +145,92 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Your gym command center</p>
+    <div className="space-y-6 pb-8">
+      <section className="relative overflow-hidden rounded-[32px] border border-primary/30 bg-gradient-to-br from-primary via-[#20c55d] to-[#0f8f45] p-6 text-black shadow-[0_0_45px_rgba(32,197,93,0.18)]">
+        <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-lg font-semibold text-black/70">Monthly Revenue</p>
+            <h1 className="mt-2 font-display text-5xl font-black tracking-tight sm:text-6xl">{money(stats.revenue)}</h1>
+            <p className="mt-3 text-base font-semibold text-black/70">{stats.activeMembers} active members • {stats.pendingMembers} pending approvals</p>
+          </div>
+          <div className="flex h-24 w-24 items-center justify-center rounded-[28px] bg-white/20">
+            <IndianRupee className="h-12 w-12" />
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <div className="relative mt-7 h-3 rounded-full bg-black/15">
+          <div className="h-3 rounded-full bg-white" style={{ width: `${Math.min(100, Math.max(10, stats.activeMembers * 8))}%` }} />
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <BigMetric icon={Users} label="Total Members" value={stats.totalMembers} sub={`${stats.activeMembers} active`} to="/members" />
+        <BigMetric icon={UserPlus} label="New Leads" value={stats.newLeads} sub={`${stats.leadConversion}% conversion`} to="/leads" tone="text-yellow-400" />
+        <BigMetric icon={CalendarCheck} label="Today Check-ins" value={stats.todayAttendance} sub={todayIso()} to="/attendance" tone="text-emerald-400" />
+        <BigMetric icon={Bell} label="Pending Approval" value={stats.pendingMembers} sub="Review members" to="/members" tone="text-orange-400" />
+        <BigMetric icon={CreditCard} label="Pending Payments" value={stats.duePayments} sub="Due / overdue" to="/payments" tone="text-red-400" />
+        <BigMetric icon={Share2} label="SE7EN FIT Referred" value={data.referred.length} sub="Referral users" to="/referred-users" tone="text-purple-400" />
+        <BigMetric icon={Wrench} label="Equipment Issues" value={stats.equipmentIssues} sub="Needs attention" to="/equipment" tone="text-cyan-400" />
+        <BigMetric icon={Star} label="Avg Rating" value={stats.avgRating} sub={`${data.reviews.length} reviews`} to="/reviews" tone="text-yellow-300" />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
-        <StatCard title="Total Members" value={stats.totalMembers} icon={Users} />
-        <StatCard title="Active Members" value={stats.activeMembers} icon={UserCheck} change={`${stats.newThisMonth} new`} changeType="positive" />
-        <StatCard title="Today Attendance" value={stats.todayAttendance} icon={ClipboardCheck} />
-        <StatCard title="Monthly Revenue" value={`₹${(stats.revenue || 0).toLocaleString()}`} icon={DollarSign} />
-        <StatCard title="Pending Payments" value={stats.duePayments} icon={AlertCircle} />
-        <StatCard title="Expiring Soon" value={stats.expiringMemberships} icon={Clock} />
-        <StatCard title="SE7EN FIT Referred" value={stats.referredUsers} icon={Zap} />
-        <StatCard title="Lead Conversion" value={`${stats.leadConversion}%`} icon={TrendingUp} />
-        <StatCard title="Active Workout Plans" value={stats.activeWorkouts || 0} icon={Dumbbell} />
-        <StatCard title="Active Diet Plans" value={stats.activeDiets || 0} icon={Users} />
-        <StatCard title="Active Campaigns" value={stats.activeCampaigns} icon={Megaphone} />
-        <StatCard title="Equipment Issues" value={stats.eqIssues} icon={Wrench} />
-        <StatCard title="WhatsApp Queued" value={stats.whatsappSent || 0} icon={MessageSquare} />
-        <StatCard title="Emails Queued" value={stats.emailsSent || 0} icon={Mail} />
-        <StatCard title="Avg Rating" value={stats.avgRating} icon={Star} />
-        <StatCard title="New Leads" value={(stats.newThisMonth) || 0} icon={Target} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ChartCard title="Weekly Attendance">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={mockAttendance}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-              <XAxis dataKey="day" stroke="#666" fontSize={11} />
-              <YAxis stroke="#666" fontSize={11} />
-              <Tooltip contentStyle={{ background: '#111', border: '1px solid #242424', borderRadius: 8, color: '#fff' }} />
-              <Bar dataKey="count" fill={NEON_GREEN} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Member Growth">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={mockRevenue.map((m, i) => ({ ...m, members: 50 + i * 12 }))}>
-              <defs>
-                <linearGradient id="memGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#22C55E" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#22C55E" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-              <XAxis dataKey="month" stroke="#666" fontSize={11} />
-              <YAxis stroke="#666" fontSize={11} />
-              <Tooltip contentStyle={{ background: '#111', border: '1px solid #242424', borderRadius: 8, color: '#fff' }} />
-              <Area type="monotone" dataKey="members" stroke="#22C55E" fill="url(#memGrad)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card rounded-xl p-5"
-      >
+      <section className="rounded-[28px] border border-border bg-[#101010] p-5">
         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Quick Actions</p>
-            <h3 className="text-xl font-display font-bold text-foreground">Run common gym tasks faster</h3>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">More Features</p>
+            <h2 className="text-2xl font-display font-black">Gym Owner Control Center</h2>
           </div>
-          <p className="text-sm text-muted-foreground">Tap any action to jump directly into the workflow.</p>
+          <p className="text-sm text-muted-foreground">All main functions from the dashboard screens.</p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <QuickAction icon={UserPlus} label="Add Member" to="/members" />
-          <QuickAction icon={Target} label="Add Lead" to="/leads" />
-          <QuickAction icon={ClipboardCheck} label="Attendance" to="/attendance" />
-          <QuickAction icon={Dumbbell} label="Assign Workout" to="/assigned-workouts" />
-          <QuickAction icon={Users} label="Assign Diet" to="/assigned-diets" />
-          <QuickAction icon={Megaphone} label="Campaign" to="/campaigns" />
-          <QuickAction icon={MessageSquare} label="WhatsApp" to="/whatsapp" />
-          <QuickAction icon={Zap} label="Referred" to="/referred-users" />
-          <QuickAction icon={Download} label="Reports" to="/reports" />
-          <QuickAction icon={Wrench} label="Equipment" to="/equipment" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <FeatureTile icon={Building2} label="Gym Profile" to="/gym-profile" sub="Edit details" />
+          <FeatureTile icon={Dumbbell} label="Equipment" to="/equipment" sub="Tools" />
+          <FeatureTile icon={CalendarCheck} label="Attendance" to="/attendance" sub="QR / logs" />
+          <FeatureTile icon={Trophy} label="Challenges" to="/challenges" sub="Engage" />
+          <FeatureTile icon={Gift} label="Rewards" to="/plans" sub="Offers" />
+          <FeatureTile icon={Share2} label="Referrals" to="/referrals" sub="Code" />
+          <FeatureTile icon={Star} label="Reviews" to="/reviews" sub="Ratings" />
+          <FeatureTile icon={Bell} label="Announcements" to="/notifications" sub="Broadcast" />
+          <FeatureTile icon={Target} label="Leads" to="/leads" sub="Follow-up" />
+          <FeatureTile icon={CreditCard} label="Earnings" to="/payments" sub="Payouts" />
+          <FeatureTile icon={MessageSquare} label="Messages" to="/whatsapp" sub="WhatsApp" />
+          <FeatureTile icon={Settings} label="Settings" to="/settings" sub="Account" />
         </div>
-      </motion.div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <section className="rounded-[28px] border border-primary/25 bg-primary/10 p-5 lg:col-span-1">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Referral Code</p>
+          <p className="mt-3 font-mono text-3xl font-black tracking-widest text-primary">{gym.referral_code || 'SE7ENF-GYM'}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">Share this code with members so their signup links to your gym.</p>
+          <div className="mt-5 flex gap-2">
+            <Link to="/referrals" className="rounded-xl bg-primary px-4 py-2 text-sm font-black text-black">View Referrals</Link>
+            <Link to="/reports" className="rounded-xl border border-border px-4 py-2 text-sm font-bold text-foreground"><Download className="mr-1 inline h-4 w-4" /> Export</Link>
+          </div>
+        </section>
+
+        <section className="rounded-[28px] border border-border bg-[#101010] p-5 lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Recent Members</p>
+              <h2 className="text-2xl font-display font-black">Latest joined users</h2>
+            </div>
+            <Link to="/members" className="text-sm font-black text-primary">See all</Link>
+          </div>
+          <div className="space-y-3">
+            {recentMembers.length > 0 ? recentMembers.map((member) => <MemberRow key={member.id || member.email || member.phone} member={member} />) : (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No members yet. Add members or share your referral code.</div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <BigMetric icon={Dumbbell} label="Active Workouts" value={stats.activeWorkouts} to="/assigned-workouts" />
+        <BigMetric icon={Users} label="Active Diets" value={stats.activeDiets} to="/assigned-diets" />
+        <BigMetric icon={Target} label="Campaigns" value={stats.activeCampaigns} to="/campaigns" />
+        <BigMetric icon={QrCode} label="Quick Check-in" value="QR" sub="Open attendance" to="/attendance" />
+      </section>
     </div>
   );
 }
